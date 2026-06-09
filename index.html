@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FutPerformance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;background:#f0f2f5;color:#1a1d23}
+:root{
+  --green-900:#0d3318;--green-800:#1b5e20;--green-700:#2e7d32;--green-600:#388e3c;
+  --green-400:#66bb6a;--green-100:#c8e6c9;--green-50:#e8f5e9;
+  --yellow-700:#f57f17;--yellow-50:#fffde7;--red-700:#c62828;--red-50:#ffebee;
+  --blue-700:#1565c0;--blue-50:#e3f2fd;
+  --surface:#fff;--surface-2:#f7f8fa;--border:#e2e5ea;--border-strong:#c5cbd5;
+  --text-1:#1a1d23;--text-2:#4a5568;--text-3:#8492a6;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:14px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06)
+}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--green-900);display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:24px}
+.brand{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.10)}
+.brand-logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.brand-icon{width:36px;height:36px;background:var(--green-700);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:.02em;line-height:1}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.nav-group{padding:12px 0 4px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--green-400);font-weight:500}
+.nav-item .ti{font-size:17px;flex-shrink:0}
+.topbar h1{font-size:17px;font-weight:600;color:var(--text-1)}
+.topbar-meta{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:10px}
+.season-badge{background:var(--green-50);color:var(--green-700);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.lang-switcher{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px}
+.lang-btn{padding:3px 10px;border-radius:4px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-2);font-family:inherit;transition:all .15s}
+.lang-btn.active{background:var(--green-700);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--surface);color:var(--text-1);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--green-700);color:#fff;border-color:var(--green-700)}
+.btn.primary:hover{background:var(--green-800);border-color:var(--green-800)}
+.btn.danger{background:var(--red-50);color:var(--red-700);border-color:#ef9a9a}
+.btn.danger:hover{background:#ffcdd2}
+.btn .ti{font-size:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow-sm)}
+.card-title{font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-title .ti{color:var(--green-700);font-size:17px}
+.metric-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px}
+.metric-label{font-size:11px;font-weight:500;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.metric-value{font-size:26px;font-weight:600;line-height:1;color:var(--text-1)}
+.metric-sub{font-size:11px;color:var(--text-3);margin-top:4px}
+.metric-up{color:var(--green-700)}.metric-down{color:var(--red-700)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g2i{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.badge-green{background:var(--green-50);color:var(--green-800)}
+.badge-yellow{background:var(--yellow-50);color:var(--yellow-700)}
+.badge-red{background:var(--red-50);color:var(--red-700)}
+.badge-blue{background:var(--blue-50);color:var(--blue-700)}
+.badge-gray{background:#f0f2f5;color:var(--text-2)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;background:var(--surface-2)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-1);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface-2)}
+tfoot td{border-top:2px solid var(--border);font-weight:600;border-bottom:none}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:5px}
+input,select,textarea{width:100%;padding:8px 11px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-1);font-size:13px;font-family:inherit;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green-700);box-shadow:0 0 0 3px rgba(46,125,50,.12)}
+textarea{min-height:80px;resize:vertical}
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}
+.prog-fill{height:100%;border-radius:3px;background:var(--green-700);transition:width .5s ease}
+.tab-bar{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:3px;margin-bottom:20px;width:fit-content}
+.tab{padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-2);transition:all .15s;border:none;background:transparent;font-family:inherit}
+.tab.active{background:var(--surface);color:var(--text-1);font-weight:500;box-shadow:var(--shadow-sm)}
+.alert{padding:11px 14px;border-radius:var(--radius-md);font-size:13px;display:flex;align-items:flex-start;gap:9px}
+.alert .ti{font-size:16px;flex-shrink:0;margin-top:1px}
+.alert-warn{background:var(--yellow-50);color:#5d3f00;border:1px solid #ffe082}
+.alert-ok{background:var(--green-50);color:var(--green-800);border:1px solid var(--green-100)}
+.alert-err{background:var(--red-50);color:var(--red-700);border:1px solid #ef9a9a}
+.alert-info{background:var(--blue-50);color:var(--blue-700);border:1px solid #90caf9}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--green-50);color:var(--green-700);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid var(--green-100)}
+.avatar-lg{width:48px;height:48px;font-size:17px}
+.wb-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.wb-row:last-child{border-bottom:none}
+.wb-label{flex:0 0 175px;font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.wb-label .ti{font-size:15px}
+.rating-btns{display:flex;gap:5px}
+.rating-btn{width:32px;height:32px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);transition:all .12s;font-family:inherit}
+.rating-btn:hover{border-color:var(--green-600);color:var(--green-700)}
+.rating-btn.active{background:var(--green-700);color:#fff;border-color:var(--green-700)}
+.igp-score{font-size:56px;font-weight:700;line-height:1;font-family:'Barlow Condensed',sans-serif}
+.carga-calc{padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;color:var(--text-2);min-height:44px}
+.pres-cell{text-align:center;min-width:46px}
+.report-header{background:linear-gradient(135deg,var(--green-900),var(--green-700));padding:20px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin:-18px -20px 18px}
+.report-header h2{color:#fff;font-size:18px;font-weight:600}
+.report-header p{color:rgba(255,255,255,.65);font-size:12px;margin-top:3px}
+.rpe-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px}
+.rpe-bar div{flex:1}
+.section-header{margin-bottom:18px}
+.section-header h2{font-size:18px;font-weight:600}
+.section-header p{font-size:13px;color:var(--text-2);margin-top:3px}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+@media print{.sidebar,.topbar{display:none}.main{overflow:visible}.content{padding:0;overflow:visible}.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}[id^="modal-"]{display:none!important}}
+@media(max-width:900px){.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+@media(max-width:640px){.sidebar{display:none}.g4,.g3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-icon">&#9917;</div>
+        <span class="brand-name">FutPerformance</span>
+      </div>
+      <div class="brand-sub" id="sb-brand">Sistema de Monitoramento Esportivo</div>
+    </div>
+    <nav class="nav-group">
+      <div class="nav-label" id="nl-overview">Visao geral</div>
+      <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span id="nm-dashboard">Dashboard</span></div>
+      <div class="nav-item" data-page="atletas"><i class="ti ti-users"></i><span id="nm-atletas">Atletas</span></div>
+    </nav>
+    <nav class="nav-group">
+      <div class="nav-label" id="nl-assessments">Avaliacoes</div>
+      <div class="nav-item" data-page="avaliacao"><i class="ti ti-clipboard-list"></i><span id="nm-avaliacao">Avaliacao fisica</span></div>
+      <div class="nav-item" data-page="wellbeing"><i class="ti ti-heart-rate-monitor"></i><span id="nm-wellbeing">Bem-estar diario</span></div>
+    </nav>
+    <nav class="nav-group">
+      <div class="nav-label" id="nl-monitoring">Monitoramento</div>
+      <div class="nav-item" data-page="carga"><i class="ti ti-activity"></i><span id="nm-carga">Controle de carga</span></div>
+      <div class="nav-item" data-page="presenca"><i class="ti ti-calendar-check"></i><span id="nm-presenca">Presenca</span></div>
+      <div class="nav-item" data-page="lesoes"><i class="ti ti-stethoscope"></i><span id="nm-lesoes">Lesoes</span></div>
+    </nav>
+    <nav class="nav-group">
+      <div class="nav-label" id="nl-reports">Relatorios</div>
+      <div class="nav-item" data-page="relatorio"><i class="ti ti-file-analytics"></i><span id="nm-relatorio">Relatorio individual</span></div>
+    </nav>
+    <div style="padding:16px;margin-top:auto;border-top:1px solid rgba(255,255,255,.10)">
+      <div style="font-size:11px;color:rgba(255,255,255,.3);line-height:1.6">Ref.: A. C. Gomes &middot; J. P. Medina<br>J. A. Rodrigues &middot; Foster RPE</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="topbar-meta">
+        <span class="season-badge" id="sb-season">Temporada 2025</span>
+        <span id="current-date"></span>
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+          <button class="lang-btn" onclick="setLang('de')">DE</button>
+        </div>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<div id="modal-atleta" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:520px;max-width:96vw;box-shadow:var(--shadow-md);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:600" id="m-title">Novo atleta</h3>
+      <button class="btn" onclick="closeAtletaModal()" style="padding:4px 8px"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="g2i">
+      <div class="form-group"><label class="form-label" id="ml-nome">Nome completo</label><input id="m-nome" placeholder="Carlos Silva"></div>
+      <div class="form-group"><label class="form-label" id="ml-nasc">Data de nascimento</label><input id="m-nasc" type="date"></div>
+      <div class="form-group"><label class="form-label" id="ml-pos">Posicao</label>
+        <select id="m-pos"><option>GOL</option><option>ZAG</option><option>LD</option><option>LE</option><option>VOL</option><option>MC</option><option selected>MEI</option><option>PE</option><option>PD</option><option>ATA</option><option>SA</option></select>
+      </div>
+      <div class="form-group"><label class="form-label" id="ml-pe">Pe dominante</label>
+        <select id="m-pe"><option id="mpe-r">Direito</option><option id="mpe-l">Esquerdo</option><option id="mpe-b">Ambos</option></select>
+      </div>
+      <div class="form-group"><label class="form-label" id="ml-peso">Peso (kg)</label><input id="m-peso" type="number" step="0.1" placeholder="75.0"></div>
+      <div class="form-group"><label class="form-label" id="ml-alt">Altura (cm)</label><input id="m-alt" type="number" placeholder="178"></div>
+      <div class="form-group"><label class="form-label" id="ml-gord">% Gordura</label><input id="m-gord" type="number" step="0.1" placeholder="12.5"></div>
+      <div class="form-group"><label class="form-label" id="ml-tel">Telefone / WhatsApp</label><input id="m-tel" placeholder="(11) 99999-9999"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" onclick="closeAtletaModal()" id="m-cancel">Cancelar</button>
+      <button class="btn primary" onclick="saveAtleta()"><i class="ti ti-check"></i><span id="m-save">Salvar atleta</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-lesao" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:500px;max-width:96vw;box-shadow:var(--shadow-md);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:16px;font-weight:600" id="l-title">Registrar lesao</h3>
+      <button class="btn" onclick="closeLesaoModal()" style="padding:4px 8px"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-group"><label class="form-label" id="ll-atleta">Atleta</label><select id="l-atleta"></select></div>
+    <div class="g2i">
+      <div class="form-group"><label class="form-label" id="ll-inicio">Data inicio</label><input id="l-inicio" type="date"></div>
+      <div class="form-group"><label class="form-label" id="ll-retorno">Data retorno</label><input id="l-retorno" type="date"></div>
+      <div class="form-group"><label class="form-label" id="ll-regiao">Regiao corporal</label>
+        <select id="l-regiao"><option id="lr-joe">Joelho</option><option id="lr-tor">Tornozelo</option><option id="lr-cox">Coxa</option><option id="lr-pan">Panturrilha</option><option id="lr-lom">Lombar</option><option id="lr-omb">Ombro</option><option id="lr-qua">Quadril</option><option id="lr-out">Outros</option></select>
+      </div>
+      <div class="form-group"><label class="form-label" id="ll-tipo">Tipo</label>
+        <select id="l-tipo"><option id="lt-mus">Muscular</option><option id="lt-lig">Ligamentar</option><option id="lt-oss">Ossea</option><option id="lt-con">Contusao</option><option id="lt-sob">Sobrecarga</option><option id="lt-out">Outros</option></select>
+      </div>
+      <div class="form-group"><label class="form-label" id="ll-mec">Mecanismo</label>
+        <select id="l-mec"><option id="lm-con">Contato</option><option id="lm-nco">Sem contato</option><option>Overuse</option><option id="lm-rec">Recidiva</option></select>
+      </div>
+      <div class="form-group"><label class="form-label" id="ll-lado">Lado</label>
+        <select id="l-lado"><option id="lla-r">Direito</option><option id="lla-l">Esquerdo</option><option id="lla-b">Bilateral</option><option>N/A</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label" id="ll-obs">Observacoes</label><textarea id="l-obs"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeLesaoModal()" id="l-cancel">Cancelar</button>
+      <button class="btn primary" onclick="saveLesao()"><i class="ti ti-check"></i><span id="l-save">Registrar</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-delete" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:400px;max-width:96vw;box-shadow:var(--shadow-md)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--red-50);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-trash" style="font-size:20px;color:var(--red-700)"></i>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:600" id="del-title">Excluir atleta?</div>
+        <div style="font-size:13px;color:var(--text-2)" id="del-name"></div>
+      </div>
+    </div>
+    <div class="alert alert-err" style="margin-bottom:14px">
+      <i class="ti ti-alert-triangle"></i>
+      <span id="del-warn">Todos os dados serao removidos permanentemente.</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeDeleteModal()" id="del-cancel">Cancelar</button>
+      <button class="btn danger" onclick="confirmDelete()"><i class="ti ti-trash"></i><span id="del-confirm">Excluir permanentemente</span></button>
+    </div>
+  </div>
+</div>
+<script>
+
+var TR = {
+pt:{
+  brand:"Sistema de Monitoramento Esportivo", season:"Temporada 2025",
+  nl_overview:"Visao geral", nl_assessments:"Avaliacoes", nl_monitoring:"Monitoramento", nl_reports:"Relatorios",
+  nm_dashboard:"Dashboard", nm_atletas:"Atletas", nm_avaliacao:"Avaliacao fisica",
+  nm_wellbeing:"Bem-estar diario", nm_carga:"Controle de carga",
+  nm_presenca:"Presenca", nm_lesoes:"Lesoes", nm_relatorio:"Relatorio individual",
+  m_title:"Novo atleta", ml_nome:"Nome completo", ml_nasc:"Data de nascimento",
+  ml_pos:"Posicao", ml_pe:"Pe dominante", mpe_r:"Direito", mpe_l:"Esquerdo", mpe_b:"Ambos",
+  ml_peso:"Peso (kg)", ml_alt:"Altura (cm)", ml_gord:"% Gordura", ml_tel:"Telefone / WhatsApp",
+  m_cancel:"Cancelar", m_save:"Salvar atleta",
+  l_title:"Registrar lesao", ll_atleta:"Atleta", ll_inicio:"Data inicio", ll_retorno:"Data retorno",
+  ll_regiao:"Regiao corporal", lr_joe:"Joelho", lr_tor:"Tornozelo", lr_cox:"Coxa",
+  lr_pan:"Panturrilha", lr_lom:"Lombar", lr_omb:"Ombro", lr_qua:"Quadril", lr_out:"Outros",
+  ll_tipo:"Tipo", lt_mus:"Muscular", lt_lig:"Ligamentar", lt_oss:"Ossea",
+  lt_con:"Contusao", lt_sob:"Sobrecarga", lt_out:"Outros",
+  ll_mec:"Mecanismo", lm_con:"Contato", lm_nco:"Sem contato", lm_rec:"Recidiva",
+  ll_lado:"Lado", lla_r:"Direito", lla_l:"Esquerdo", lla_b:"Bilateral",
+  ll_obs:"Observacoes", l_cancel:"Cancelar", l_save:"Registrar",
+  del_title:"Excluir atleta?", del_warn:"Todos os dados de avaliacao, presenca e bem-estar serao removidos permanentemente.",
+  del_cancel:"Cancelar", del_confirm:"Excluir permanentemente",
+  pg_dashboard:"Dashboard", pg_atletas:"Atletas", pg_avaliacao:"Avaliacao fisica",
+  pg_wellbeing:"Bem-estar diario", pg_carga:"Controle de carga",
+  pg_presenca:"Controle de presenca", pg_lesoes:"Historico de lesoes", pg_relatorio:"Relatorio individual",
+  ua:"UA", years:"anos",
+  st_active:"Ativo", st_injured:"Lesionado", st_inactive:"Inativo",
+  igp_full:"Prontidao total", igp_mod:"Prontidao moderada", igp_red:"Prontidao reduzida", igp_crit:"Prontidao critica",
+  igp_act_full:"Treino normal conforme planejado.",
+  igp_act_mod:"Monitorar durante a sessao. Reduzir carga se piorar.",
+  igp_act_crit:"Prontidao critica - trabalho regenerativo ou dispensa justificada.",
+  saved_ok:"Salvo!",
+  sp:"Fisico", st:"Tecnico/Tatico", sf:"Amistoso", sm:"Jogo-treino", sr:"Regenerativo", sa:"Avaliacao",
+  pres_p:"P", pres_f:"F", pres_l:"L",
+  pres_legend:"P = Presente | F = Falta | L = Lesionado",
+  in_treatment:"Em tratamento", recovered:"Recuperado", days_lbl:"dias",
+  new_athlete:"Novo atleta", delete_athlete:"Excluir atleta",
+  register_injury:"Registrar lesao", add_week:"Adicionar a semana",
+  gen_report:"Gerar relatorio", print_report:"Imprimir", gen_first:"Gere o relatorio primeiro.",
+  assessment_saved:"Avaliacao salva com sucesso!", select_athlete:"Selecione o atleta.",
+  fill_err:"Informe duracao e RPE.",
+  load_fill:"Preencha duracao e RPE para calcular a carga da sessao.",
+  load_high:"Alta intensidade", load_mod:"Intensidade moderada", load_low:"Intensidade baixa",
+  rpe_hint:"Escala RPE: 1=leve   3=moderado   5=dificil   7=muito dificil   10=maximo",
+  save_igp:"Salvar e calcular IGP",
+  save_assessment:"Salvar avaliacao",
+  igp_formula:"Formula: IGP = (soma dos 5 indicadores) / 25 x 100",
+  igp_total:"IGP total",
+  wb_sleep:"Qualidade do sono", wb_fatigue:"Fadiga geral", wb_pain:"Dor muscular",
+  wb_motivation:"Motivacao", wb_stress:"Ausencia de estresse",
+  indicator:"Indicador", score:"Nota", igp_weight:"Peso no IGP",
+  weekly_total:"Total semanal",
+  indiv_perf:"Relatorio de desempenho individual",
+  gen_on:"Gerado em", period_lbl:"Periodo",
+  initial_aval:"Avaliacao inicial", current_lbl:"Atual",
+  variation_lbl:"Variacao", trend_lbl:"Tendencia",
+  impr_badge:"Melhora", decline_badge:"Queda",
+  no_data:"Sem dados de evolucao para este atleta. Realize a avaliacao fisica primeiro.",
+  str_lbl:"Pontos fortes", imp_lbl:"Pontos de melhoria", rec_lbl:"Recomendacoes do preparador fisico",
+  mon:"Segunda", tue:"Terca", wed:"Quarta", thu:"Quinta", fri:"Sexta", sat:"Sabado", sun:"Domingo",
+  active_athletes:"Atletas ativos", of:"de", registered:"cadastrados",
+  injured_lbl:"Lesionados", sidelined:"afastados agora",
+  avg_igp:"IGP medio hoje", avg_attendance:"Presenca media", in_season:"na temporada",
+  readiness_today:"Prontidao hoje (IGP)", weekly_load:"Carga semanal",
+  total_label:"Total", bip_evolution:"Evolucao BIP / Yo-Yo - equipe (metros)",
+  pos_col:"Posicao", igp_col:"IGP", status_col:"Status",
+  age_col:"Idade", weight_col:"Peso", fat_col:"% Gordura",
+  attendance_col:"Presenca", contact_col:"Contato",
+  register_assessment:"Registrar avaliacao", test_evolution:"Evolucao dos testes",
+  assessment_seq:"Sequencia obrigatoria: dados corporais - prancha - Illinois - sprint 10m - sprint 30m - BIP. Aquecimento minimo de 10 min.",
+  identification:"Identificacao", assessment_period:"Periodo de avaliacao",
+  sem0:"Semana 0 - Avaliacao inicial", sem4:"Semana 4", sem8:"Semana 8", sem12:"Semana 12", sem16:"Semana 16",
+  assessment_date:"Data da avaliacao", obs_lbl:"Observacoes",
+  obs_ph:"Limitacoes, condicoes do dia, dores relatadas...",
+  body_data:"Dados corporais", waist_cm:"Circ. cintura (cm)", hip_cm:"Circ. quadril (cm)",
+  thigh_cm:"Circ. coxa dom. (cm)", calf_cm:"Circ. panturrilha (cm)",
+  physical_tests:"Testes fisicos", plank_s:"Prancha isometrica (s)",
+  illinois_s:"Illinois (s)", sprint10:"Sprint 10m (s)", sprint30:"Sprint 30m (s)",
+  broad_jump:"Salto horizontal (cm)", bip_m:"BIP / Yo-Yo (m)",
+  ref_table:"Referencias de classificacao", test_col:"Teste", excellent:"Excelente", good:"Bom", regular:"Regular",
+  bip_chart:"BIP / Yo-Yo (metros)", s10_chart:"Sprint 10m (s - menor e melhor)",
+  s30_chart:"Sprint 30m (s - menor e melhor)", jump_chart:"Salto horizontal (cm)",
+  plank_chart:"Prancha isometrica (s)", fat_chart:"% Gordura corporal",
+  wb_register:"Registro de bem-estar", sleep_hours:"Horas de sono (esta noite)",
+  readiness_index:"Indice de prontidao (IGP)",
+  weekly_load_ua:"Carga semanal", target_load:"meta: 1000-2500 UA",
+  avg_session:"Media por sessao", sessions_lbl:"sessoes",
+  monotony_lbl:"Monotonia", vary_loads:"Variar cargas", ideal_range:"dentro do ideal",
+  strain_fat:"Strain (fadiga)", strain_high:"alto", strain_mod:"moderado", strain_ok:"ok",
+  mono_alert:"Monotonia alta ({v} > 2,0) - variar a intensidade reduz risco de overreaching.",
+  strain_alert:"Strain elevado ({v} > 6000) - considerar reducao da carga na proxima semana.",
+  reg_session:"Registrar nova sessao", sess_date:"Data", sess_type:"Tipo de sessao",
+  dur_min:"Duracao (min)", rpe_avg:"RPE medio (0-10)",
+  add_week_btn:"Adicionar a semana", week_chart:"Cargas desta semana (UA)",
+  week_detail:"Detalhamento da semana",
+  day_col:"Dia", type_col:"Tipo", dur_col:"Duracao", load_ua:"Carga (UA)", pct_week:"% da semana",
+  active_inj:"Lesoes ativas", total_inj:"Total na temporada",
+  sidelined_n:"atletas afastados", recovered_n:"{n} recuperado(s)",
+  start_col:"Inicio", return_col:"Retorno", days_col:"Dias", region_col:"Regiao", mech_col:"Mecanismo",
+  cfg_report:"Configurar relatorio", report_period:"Periodo",
+  strengths:"Pontos fortes", improvement:"Pontos de melhoria",
+  recommendations:"Recomendacoes do preparador fisico",
+  str_ph:"Evolucao positiva em todos os testes. Assiduidade acima da media...",
+  imp_ph:"Qualidade do sono abaixo do ideal. Trabalhar resistencia de core...",
+  rec_ph:"Incluir trabalho de fortalecimento. Orientar sobre higiene do sono...",
+  rep_ph:"Preencha os dados e clique em Gerar relatorio",
+  curr_weight:"Peso atual", fat_lbl:"% Gordura"
+},
+de:{
+  brand:"Sportliches Monitoring-System", season:"Saison 2025",
+  nl_overview:"Ubersicht", nl_assessments:"Auswertungen", nl_monitoring:"Uberwachung", nl_reports:"Berichte",
+  nm_dashboard:"Dashboard", nm_atletas:"Spieler", nm_avaliacao:"Korperliche Bewertung",
+  nm_wellbeing:"Tagliches Wohlbefinden", nm_carga:"Belastungssteuerung",
+  nm_presenca:"Anwesenheit", nm_lesoes:"Verletzungen", nm_relatorio:"Individualbericht",
+  m_title:"Neuer Spieler", ml_nome:"Vollstandiger Name", ml_nasc:"Geburtsdatum",
+  ml_pos:"Position", ml_pe:"Starker Fuss", mpe_r:"Rechts", mpe_l:"Links", mpe_b:"Beide",
+  ml_peso:"Gewicht (kg)", ml_alt:"Grosse (cm)", ml_gord:"% Korperfett", ml_tel:"Telefon / WhatsApp",
+  m_cancel:"Abbrechen", m_save:"Spieler speichern",
+  l_title:"Verletzung erfassen", ll_atleta:"Spieler", ll_inicio:"Startdatum", ll_retorno:"Ruckkehrdatum",
+  ll_regiao:"Korperregion", lr_joe:"Knie", lr_tor:"Knochel", lr_cox:"Oberschenkel",
+  lr_pan:"Wade", lr_lom:"Lendenwirbel", lr_omb:"Schulter", lr_qua:"Hufte", lr_out:"Sonstige",
+  ll_tipo:"Typ", lt_mus:"Muskular", lt_lig:"Bandverletzung", lt_oss:"Knochern",
+  lt_con:"Prellung", lt_sob:"Uberlastung", lt_out:"Sonstige",
+  ll_mec:"Mechanismus", lm_con:"Kontakt", lm_nco:"Kein Kontakt", lm_rec:"Ruckfall",
+  ll_lado:"Seite", lla_r:"Rechts", lla_l:"Links", lla_b:"Beidseitig",
+  ll_obs:"Anmerkungen", l_cancel:"Abbrechen", l_save:"Erfassen",
+  del_title:"Spieler loschen?", del_warn:"Alle Bewertungs-, Anwesenheits- und Wohlbefindensdaten werden dauerhaft entfernt.",
+  del_cancel:"Abbrechen", del_confirm:"Dauerhaft loschen",
+  pg_dashboard:"Dashboard", pg_atletas:"Spieler", pg_avaliacao:"Korperliche Bewertung",
+  pg_wellbeing:"Tagliches Wohlbefinden", pg_carga:"Belastungssteuerung",
+  pg_presenca:"Anwesenheitskontrolle", pg_lesoes:"Verletzungshistorie", pg_relatorio:"Individualbericht",
+  ua:"AE", years:"Jahre",
+  st_active:"Aktiv", st_injured:"Verletzt", st_inactive:"Inaktiv",
+  igp_full:"Volle Einsatzbereitschaft", igp_mod:"Moderate Bereitschaft", igp_red:"Reduzierte Bereitschaft", igp_crit:"Kritische Bereitschaft",
+  igp_act_full:"Normales Training wie geplant.",
+  igp_act_mod:"Wahrend der Einheit uberwachen. Last reduzieren falls notig.",
+  igp_act_crit:"Kritische Bereitschaft - regeneratives Training oder begrundete Freistellung.",
+  saved_ok:"Gespeichert!",
+  sp:"Kondition", st:"Technik/Taktik", sf:"Freundschaftsspiel", sm:"Testspiel", sr:"Regeneration", sa:"Bewertung",
+  pres_p:"A", pres_f:"F", pres_l:"V",
+  pres_legend:"A = Anwesend | F = Fehlend | V = Verletzt",
+  in_treatment:"In Behandlung", recovered:"Genesen", days_lbl:"Tage",
+  new_athlete:"Neuer Spieler", delete_athlete:"Spieler loschen",
+  register_injury:"Verletzung erfassen", add_week:"Zur Woche hinzufugen",
+  gen_report:"Bericht erstellen", print_report:"Drucken", gen_first:"Bericht zuerst erstellen.",
+  assessment_saved:"Bewertung erfolgreich gespeichert!", select_athlete:"Spieler auswahlen.",
+  fill_err:"Bitte Dauer und RPE angeben.",
+  load_fill:"Dauer und RPE eingeben, um die Einheitenlast zu berechnen.",
+  load_high:"Hohe Intensitat", load_mod:"Moderate Intensitat", load_low:"Niedrige Intensitat",
+  rpe_hint:"RPE-Skala: 1=leicht   3=moderat   5=schwer   7=sehr schwer   10=maximal",
+  save_igp:"Speichern & WBI berechnen",
+  save_assessment:"Bewertung speichern",
+  igp_formula:"Formel: WBI = (Summe der 5 Indikatoren) / 25 x 100",
+  igp_total:"WBI gesamt",
+  wb_sleep:"Schlafqualitat", wb_fatigue:"Allgemeine Mudigkeit", wb_pain:"Muskelschmerzen",
+  wb_motivation:"Motivation", wb_stress:"Stressfreiheit",
+  indicator:"Indikator", score:"Note", igp_weight:"Gewichtung WBI",
+  weekly_total:"Wochensumme",
+  indiv_perf:"Individueller Leistungsbericht",
+  gen_on:"Erstellt am", period_lbl:"Zeitraum",
+  initial_aval:"Erstbewertung", current_lbl:"Aktuell",
+  variation_lbl:"Veranderung", trend_lbl:"Tendenz",
+  impr_badge:"Verbesserung", decline_badge:"Ruckgang",
+  no_data:"Keine Entwicklungsdaten. Zuerst korperliche Bewertung durchfuhren.",
+  str_lbl:"Starken", imp_lbl:"Verbesserungspunkte", rec_lbl:"Empfehlungen des Konditionstrainers",
+  mon:"Montag", tue:"Dienstag", wed:"Mittwoch", thu:"Donnerstag", fri:"Freitag", sat:"Samstag", sun:"Sonntag",
+  active_athletes:"Aktive Spieler", of:"von", registered:"registriert",
+  injured_lbl:"Verletzt", sidelined:"aktuell gesperrt",
+  avg_igp:"Durchsch. WBI heute", avg_attendance:"Durchsch. Anwesenheit", in_season:"in der Saison",
+  readiness_today:"Einsatzbereitschaft heute (WBI)", weekly_load:"Wochenlast",
+  total_label:"Gesamt", bip_evolution:"BIP / Yo-Yo Entwicklung - Team (Meter)",
+  pos_col:"Position", igp_col:"WBI", status_col:"Status",
+  age_col:"Alter", weight_col:"Gewicht", fat_col:"% Korperfett",
+  attendance_col:"Anwesenheit", contact_col:"Kontakt",
+  register_assessment:"Bewertung erfassen", test_evolution:"Testentwicklung",
+  assessment_seq:"Pflichtsequenz: Korperdaten - Planke - Illinois - Sprint 10m - Sprint 30m - BIP. Mindestens 10 Min. Aufwarmen.",
+  identification:"Identifikation", assessment_period:"Bewertungszeitraum",
+  sem0:"Woche 0 - Erstbewertung", sem4:"Woche 4", sem8:"Woche 8", sem12:"Woche 12", sem16:"Woche 16",
+  assessment_date:"Bewertungsdatum", obs_lbl:"Anmerkungen",
+  obs_ph:"Einschrankungen, Tagesbedingungen, gemeldete Schmerzen...",
+  body_data:"Korperdaten", waist_cm:"Taille (cm)", hip_cm:"Hufte (cm)",
+  thigh_cm:"Oberschenkel dominanter (cm)", calf_cm:"Wade (cm)",
+  physical_tests:"Korperliche Tests", plank_s:"Isometrische Planke (s)",
+  illinois_s:"Illinois (s)", sprint10:"Sprint 10m (s)", sprint30:"Sprint 30m (s)",
+  broad_jump:"Standweitsprung (cm)", bip_m:"BIP / Yo-Yo (m)",
+  ref_table:"Klassifizierungsreferenzen", test_col:"Test", excellent:"Ausgezeichnet", good:"Gut", regular:"Ausreichend",
+  bip_chart:"BIP / Yo-Yo (Meter)", s10_chart:"Sprint 10m (s - kleiner = besser)",
+  s30_chart:"Sprint 30m (s - kleiner = besser)", jump_chart:"Standweitsprung (cm)",
+  plank_chart:"Isometrische Planke (s)", fat_chart:"% Korperfett",
+  wb_register:"Wohlbefinden erfassen", sleep_hours:"Schlafstunden (vergangene Nacht)",
+  readiness_index:"Einsatzbereitschaftsindex (WBI)",
+  weekly_load_ua:"Wochenlast", target_load:"Ziel: 1000-2500 AE",
+  avg_session:"Durchschnitt je Einheit", sessions_lbl:"Einheiten",
+  monotony_lbl:"Monotonie", vary_loads:"Last variieren", ideal_range:"im Idealbereich",
+  strain_fat:"Strain (Ermudung)", strain_high:"hoch", strain_mod:"moderat", strain_ok:"ok",
+  mono_alert:"Hohe Monotonie ({v} > 2,0) - Intensitat variieren, um Ubertraining zu vermeiden.",
+  strain_alert:"Erhoter Strain ({v} > 6000) - Gesamtbelastung nachste Woche reduzieren.",
+  reg_session:"Neue Einheit erfassen", sess_date:"Datum", sess_type:"Einheitentyp",
+  dur_min:"Dauer (Min)", rpe_avg:"Durchsch. RPE (0-10)",
+  add_week_btn:"Zur Woche hinzufugen", week_chart:"Lasten dieser Woche (AE)",
+  week_detail:"Wochendetails",
+  day_col:"Tag", type_col:"Typ", dur_col:"Dauer", load_ua:"Last (AE)", pct_week:"% der Woche",
+  active_inj:"Aktive Verletzungen", total_inj:"Gesamt in der Saison",
+  sidelined_n:"Spieler gesperrt", recovered_n:"{n} genesen",
+  start_col:"Beginn", return_col:"Ruckkehr", days_col:"Tage", region_col:"Region", mech_col:"Mechanismus",
+  cfg_report:"Bericht konfigurieren", report_period:"Zeitraum",
+  strengths:"Starken", improvement:"Verbesserungspunkte",
+  recommendations:"Empfehlungen des Konditionstrainers",
+  str_ph:"Positive Entwicklung in allen Tests. Anwesenheit uber dem Teamdurchschnitt...",
+  imp_ph:"Schlafqualitat unter dem Ideal. Core-Stabilitat verbessern...",
+  rec_ph:"Sprunggelenkkraftigung einbeziehen. Schlafhygiene beraten...",
+  rep_ph:"Daten ausfullen und auf Bericht erstellen klicken",
+  curr_weight:"Aktuelles Gewicht", fat_lbl:"% Korperfett"
+}
+};
+
+var LANG = "pt";
+function t(k){ return (TR[LANG] && TR[LANG][k]) ? TR[LANG][k] : (TR.pt[k] || k); }
+
+function setLang(lang) {
+  LANG = lang;
+  document.querySelectorAll(".lang-btn").forEach(function(b){ b.classList.toggle("active", b.textContent === lang.toUpperCase()); });
+  // Update sidebar static nodes
+  var ids = ["sb-brand","sb-season","nl-overview","nl-assessments","nl-monitoring","nl-reports",
+    "nm-dashboard","nm-atletas","nm-avaliacao","nm-wellbeing","nm-carga","nm-presenca","nm-lesoes","nm-relatorio",
+    "m-title","ml-nome","ml-nasc","ml-pos","ml-pe","mpe-r","mpe-l","mpe-b",
+    "ml-peso","ml-alt","ml-gord","ml-tel","m-cancel","m-save",
+    "l-title","ll-atleta","ll-inicio","ll-retorno","ll-regiao","lr-joe","lr-tor","lr-cox","lr-pan","lr-lom","lr-omb","lr-qua","lr-out",
+    "ll-tipo","lt-mus","lt-lig","lt-oss","lt-con","lt-sob","lt-out",
+    "ll-mec","lm-con","lm-nco","lm-rec","ll-lado","lla-r","lla-l","lla-b",
+    "ll-obs","l-cancel","l-save",
+    "del-title","del-warn","del-cancel","del-confirm"];
+  ids.forEach(function(id){
+    var el = document.getElementById(id);
+    var key = id.replace(/-/g,"_");
+    if(el && TR[LANG][key]) el.textContent = TR[LANG][key];
+  });
+  destroyCharts();
+  document.getElementById("content").innerHTML = render(_currentPage);
+  afterRender(_currentPage);
+}
+
+
+// ═══ DB ═══════════════════════════════════════════════════════════
+var DB = {
+  atletas:[
+    {id:"ATL001",nome:"Carlos Silva",pos:"ATA",nasc:"2001-03-14",peso:73.5,altura:178,gord:12.1,pe:"Direito",tel:"(11) 98000-0001",status:"Ativo"},
+    {id:"ATL002",nome:"Marcos Oliveira",pos:"VOL",nasc:"1998-07-22",peso:78.2,altura:182,gord:10.8,pe:"Direito",tel:"(11) 98000-0002",status:"Ativo"},
+    {id:"ATL003",nome:"Rafael Santos",pos:"ZAG",nasc:"2003-01-05",peso:82.0,altura:185,gord:14.3,pe:"Direito",tel:"(11) 98000-0003",status:"Ativo"},
+    {id:"ATL004",nome:"Pedro Alves",pos:"LD",nasc:"2000-11-30",peso:71.8,altura:174,gord:11.5,pe:"Direito",tel:"(11) 98000-0004",status:"Lesionado"},
+    {id:"ATL005",nome:"Lucas Pereira",pos:"MEI",nasc:"2002-05-19",peso:69.4,altura:172,gord:9.7,pe:"Esquerdo",tel:"(11) 98000-0005",status:"Ativo"}
+  ],
+  wellbeing:{
+    "ATL001":{sono:4,fadiga:3,dor:4,motivacao:5,estresse:4},
+    "ATL002":{sono:3,fadiga:2,dor:3,motivacao:4,estresse:3},
+    "ATL003":{sono:5,fadiga:5,dor:5,motivacao:5,estresse:5},
+    "ATL004":{sono:2,fadiga:1,dor:2,motivacao:3,estresse:2},
+    "ATL005":{sono:4,fadiga:4,dor:4,motivacao:5,estresse:4}
+  },
+  avaliacoes:{
+    "ATL001":{bip:[1240,1360,1480,1520],s10:[1.92,1.88,1.85,1.82],s30:[4.31,4.22,4.15,4.10],salto:[195,202,208,212],prancha:[85,95,105,110],gord:[14.2,13.1,12.4,12.1],peso:[76.0,74.5,73.8,73.5]},
+    "ATL002":{bip:[1400,1480,1560,1600],s10:[1.85,1.82,1.79,1.77],s30:[4.18,4.10,4.05,4.01],salto:[205,210,215,218],prancha:[95,105,115,120],gord:[12.5,11.8,11.2,10.8],peso:[80.1,79.0,78.5,78.2]},
+    "ATL005":{bip:[1120,1200,1300,1380],s10:[1.98,1.94,1.91,1.88],s30:[4.45,4.38,4.30,4.24],salto:[185,192,198,204],prancha:[75,85,92,98],gord:[11.2,10.8,10.1,9.7],peso:[70.5,70.0,69.7,69.4]}
+  },
+  presenca:{
+    "ATL001":[1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1],
+    "ATL002":[1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+    "ATL003":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    "ATL004":[1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    "ATL005":[1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,0]
+  },
+  treinoDatas:["Seg 31/03","Ter 01/04","Qui 03/04","Sab 05/04","Seg 07/04","Ter 08/04","Qui 10/04","Sab 12/04","Seg 14/04","Ter 15/04","Qui 17/04","Sab 19/04","Seg 21/04","Ter 22/04","Qui 24/04","Sab 26/04"],
+  cargaSemana:[
+    {dia:"Segunda",tipo:"Fisico",dur:75,rpe:7},
+    {dia:"Terca",tipo:"Tecnico/Tatico",dur:90,rpe:6},
+    {dia:"Quinta",tipo:"Tecnico/Tatico",dur:90,rpe:5},
+    {dia:"Sabado",tipo:"Amistoso",dur:95,rpe:8}
+  ],
+  lesoes:[
+    {atleta:"Pedro Alves",inicio:"2025-05-10",retorno:"",regiao:"Tornozelo esq.",tipo:"Ligamentar",mec:"Contato",status:"Em tratamento"},
+    {atleta:"Carlos Silva",inicio:"2025-03-15",retorno:"2025-03-28",regiao:"Panturrilha dir.",tipo:"Muscular",mec:"Sem contato",status:"Recuperado"}
+  ],
+  nextId:6
+};
+try{var s=localStorage.getItem("fp4");if(s)Object.assign(DB,JSON.parse(s));}catch(e){}
+function saveDB(){try{localStorage.setItem("fp4",JSON.stringify(DB));}catch(e){}}
+
+
+// ═══ Helpers ══════════════════════════════════════════════════════
+var COLORS = ["#2e7d32","#1565c0","#6a1b9a","#e65100","#00695c"];
+function ini(n){return n.split(" ").slice(0,2).map(function(x){return x[0];}).join("").toUpperCase();}
+function ageOf(nasc){var d=new Date(nasc),now=new Date(),a=now.getFullYear()-d.getFullYear();if(now<new Date(now.getFullYear(),d.getMonth(),d.getDate()))a--;return a;}
+function ppct(arr){if(!arr||!arr.length)return 0;return Math.round(arr.filter(function(x){return x;}).length/arr.length*100);}
+function igpV(w){if(!w)return 0;return Math.round((w.sono+w.fadiga+w.dor+w.motivacao+w.estresse)/25*100);}
+function igpL(v){if(v>=80)return t("igp_full");if(v>=60)return t("igp_mod");if(v>=40)return t("igp_red");return t("igp_crit");}
+function igpC(v){if(v>=80)return "badge-green";if(v>=60)return "badge-yellow";return "badge-red";}
+function igpCol(v){if(v>=80)return "var(--green-700)";if(v>=60)return "var(--yellow-700)";return "var(--red-700)";}
+function stTxt(s){return s==="Ativo"?t("st_active"):s==="Lesionado"?t("st_injured"):t("st_inactive");}
+function stCls(s){return s==="Ativo"?"badge-green":s==="Lesionado"?"badge-red":"badge-gray";}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function fmtD(d){if(!d||d==="")return "--";try{return new Date(d+"T12:00:00").toLocaleDateString(LANG==="de"?"de-DE":"pt-BR");}catch(e){return d;}}
+function dayN(d){var m={0:t("sun"),1:t("mon"),2:t("tue"),3:t("wed"),4:t("thu"),5:t("fri"),6:t("sat")};return m[new Date(d+"T12:00:00").getDay()]||d;}
+function sessT(s){var m={"Fisico":t("sp"),"Tecnico/Tatico":t("st"),"Amistoso":t("sf"),"Jogo-treino":t("sm"),"Regenerativo":t("sr"),"Avaliacao":t("sa")};return m[s]||s;}
+function ua(){return t("ua");}
+function sems(){return["Sem. 0","Sem. 4","Sem. 8","Sem. 12"];}
+
+var _charts={};
+function destroyCharts(){Object.values(_charts).forEach(function(c){try{c.destroy();}catch(e){}});_charts={};}
+function mkChart(id,cfg){var el=document.getElementById(id);if(!el)return;_charts[id]=new Chart(el,cfg);}
+function atlOpts(sel){
+  DB.atletas.forEach(function(a){var o=document.createElement("option");o.value=a.id;o.textContent=a.nome+" ("+a.pos+")";sel.appendChild(o);});
+}
+
+var _currentPage = "dashboard";
+var PG_KEYS = {dashboard:"pg_dashboard",atletas:"pg_atletas",avaliacao:"pg_avaliacao",wellbeing:"pg_wellbeing",carga:"pg_carga",presenca:"pg_presenca",lesoes:"pg_lesoes",relatorio:"pg_relatorio"};
+
+document.querySelectorAll(".nav-item[data-page]").forEach(function(el){
+  el.addEventListener("click", function(){
+    var pg = el.dataset.page;
+    _currentPage = pg;
+    document.querySelectorAll(".nav-item").forEach(function(n){n.classList.remove("active");});
+    el.classList.add("active");
+    document.getElementById("page-title").textContent = t(PG_KEYS[pg]||pg);
+    destroyCharts();
+    document.getElementById("content").innerHTML = render(pg);
+    afterRender(pg);
+  });
+});
+document.getElementById("current-date").textContent = new Date().toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{weekday:"short",day:"2-digit",month:"short",year:"numeric"});
+
+function render(pg){
+  var M={dashboard:rDashboard,atletas:rAtletas,avaliacao:rAvaliacao,wellbeing:rWellbeing,carga:rCarga,presenca:rPresenca,lesoes:rLesoes,relatorio:rRelatorio};
+  return (M[pg]||rDashboard)();
+}
+
+
+// ═══ Dashboard ════════════════════════════════════════════════════
+function rDashboard(){
+  var ativos=DB.atletas.filter(function(a){return a.status==="Ativo";}).length;
+  var les=DB.atletas.filter(function(a){return a.status==="Lesionado";}).length;
+  var avgI=DB.atletas.length?Math.round(DB.atletas.reduce(function(s,a){return s+igpV(DB.wellbeing[a.id]);},0)/DB.atletas.length):0;
+  var avgP=DB.atletas.length?Math.round(DB.atletas.reduce(function(s,a){return s+ppct(DB.presenca[a.id]);},0)/DB.atletas.length):0;
+  var u=ua();
+  var cgs=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+  var tot=cgs.reduce(function(a,b){return a+b;},0);
+  var html="";
+  html+='<div class="g4 mb20">';
+  html+='<div class="metric-card"><div class="metric-label">'+t("active_athletes")+'</div><div class="metric-value">'+ativos+'</div><div class="metric-sub">'+t("of")+' '+DB.atletas.length+' '+t("registered")+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("injured_lbl")+'</div><div class="metric-value metric-down">'+les+'</div><div class="metric-sub">'+t("sidelined")+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("avg_igp")+'</div><div class="metric-value" style="color:'+igpCol(avgI)+'">'+avgI+'</div><div class="metric-sub">'+igpL(avgI)+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("avg_attendance")+'</div><div class="metric-value">'+avgP+'%</div><div class="metric-sub">'+t("in_season")+'</div></div>';
+  html+='</div>';
+  html+='<div class="g2 mb16">';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-heart-rate-monitor"></i>'+t("readiness_today")+'</div>';
+  html+='<table><thead><tr><th>'+t("nm_atletas")+'</th><th>'+t("pos_col")+'</th><th>'+t("igp_col")+'</th><th>'+t("status_col")+'</th></tr></thead><tbody>';
+  DB.atletas.forEach(function(a){
+    var v=igpV(DB.wellbeing[a.id]);
+    html+='<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar">'+ini(a.nome)+'</div><div><div style="font-weight:500">'+a.nome+'</div><div style="font-size:11px;color:var(--text-3)">'+a.id+'</div></div></div></td>';
+    html+='<td>'+a.pos+'</td><td><strong style="color:'+igpCol(v)+'">'+v+'</strong></td><td><span class="badge '+igpC(v)+'">'+igpL(v)+'</span></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-activity"></i>'+t("weekly_load")+' <small style="font-weight:400;color:var(--text-3);margin-left:4px">'+t("total_label")+': '+tot+' '+u+'</small></div>';
+  html+='<div style="position:relative;height:220px"><canvas id="ch-c-d" role="img" aria-label="load">.</canvas></div></div>';
+  html+='</div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-chart-line"></i>'+t("bip_evolution")+'</div>';
+  html+='<div style="position:relative;height:200px"><canvas id="ch-b-d" role="img" aria-label="bip">.</canvas></div></div>';
+  return html;
+}
+
+// ═══ Atletas ══════════════════════════════════════════════════════
+function rAtletas(){
+  var html='<div style="display:flex;justify-content:flex-end;margin-bottom:16px">';
+  html+='<button class="btn primary" onclick="document.getElementById(\'modal-atleta\').classList.remove(\'hidden\')"><i class="ti ti-user-plus"></i>'+t("new_athlete")+'</button></div>';
+  html+='<div class="card"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>'+t("nm_atletas")+'</th><th>'+t("pos_col")+'</th><th>'+t("age_col")+'</th><th>'+t("weight_col")+'</th><th>'+t("fat_col")+'</th><th>'+t("attendance_col")+'</th><th>'+t("igp_col")+'</th><th>'+t("status_col")+'</th><th>'+t("contact_col")+'</th><th></th></tr></thead>';
+  html+='<tbody>';
+  DB.atletas.forEach(function(a){
+    var pp=ppct(DB.presenca[a.id]);
+    var v=igpV(DB.wellbeing[a.id]);
+    var pBar=pp>=80?"var(--green-700)":pp>=60?"var(--yellow-700)":"var(--red-700)";
+    html+='<tr>';
+    html+='<td><div style="display:flex;align-items:center;gap:10px"><div class="avatar">'+ini(a.nome)+'</div><div><div style="font-weight:500">'+a.nome+'</div><div style="font-size:11px;color:var(--text-3)">'+a.id+'</div></div></div></td>';
+    html+='<td><span class="badge badge-blue">'+a.pos+'</span></td>';
+    html+='<td>'+ageOf(a.nasc)+' '+t("years")+'</td>';
+    html+='<td>'+a.peso+' kg</td>';
+    html+='<td>'+a.gord+'%</td>';
+    html+='<td><div style="font-weight:500">'+pp+'%</div><div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:'+pp+'%;background:'+pBar+'"></div></div></td>';
+    html+='<td><span class="badge '+igpC(v)+'">'+v+'</span></td>';
+    html+='<td><span class="badge '+stCls(a.status)+'">'+stTxt(a.status)+'</span></td>';
+    html+='<td style="font-size:12px;color:var(--text-2)">'+(a.tel||"--")+'</td>';
+    html+='<td><button class="btn danger" style="padding:5px 9px;font-size:12px" onclick="openDel(\''+a.id+'\')" title="'+t("delete_athlete")+'"><i class="ti ti-trash" style="font-size:14px"></i></button></td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+var _delId = null;
+function openDel(id){
+  _delId=id;
+  var a=DB.atletas.find(function(x){return x.id===id;});
+  if(!a)return;
+  document.getElementById("del-name").textContent=a.nome+" ("+a.pos+")";
+  document.getElementById("modal-delete").classList.remove("hidden");
+}
+function closeDeleteModal(){document.getElementById("modal-delete").classList.add("hidden");_delId=null;}
+function confirmDelete(){
+  if(!_delId)return;
+  DB.atletas=DB.atletas.filter(function(a){return a.id!==_delId;});
+  delete DB.wellbeing[_delId];delete DB.avaliacoes[_delId];delete DB.presenca[_delId];
+  saveDB();closeDeleteModal();destroyCharts();
+  document.getElementById("content").innerHTML=rAtletas();
+}
+function saveAtleta(){
+  var nome=document.getElementById("m-nome").value.trim();
+  if(!nome){alert(t("ml_nome")+"?");return;}
+  var a={id:"ATL"+String(DB.nextId++).padStart(3,"0"),nome:nome,
+    pos:document.getElementById("m-pos").value,
+    nasc:document.getElementById("m-nasc").value,
+    peso:parseFloat(document.getElementById("m-peso").value)||0,
+    altura:parseInt(document.getElementById("m-alt").value)||0,
+    gord:parseFloat(document.getElementById("m-gord").value)||0,
+    pe:document.getElementById("m-pe").value,
+    tel:document.getElementById("m-tel").value,status:"Ativo"};
+  DB.atletas.push(a);
+  DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
+  DB.presenca[a.id]=[];
+  saveDB();closeAtletaModal();destroyCharts();
+  document.getElementById("content").innerHTML=rAtletas();
+}
+function closeAtletaModal(){document.getElementById("modal-atleta").classList.add("hidden");}
+
+
+// ═══ Avaliacao ════════════════════════════════════════════════════
+var _aTab="form";
+function rAvaliacao(){
+  _aTab="form";
+  var atlOps=DB.atletas.map(function(a){return '<option value="'+a.id+'">'+a.nome+' ('+a.pos+')</option>';}).join("");
+  var html='';
+  html+='<div class="tab-bar">';
+  html+='<button class="tab active" id="tab-form" onclick="swAv(\'form\')">'+t("register_assessment")+'</button>';
+  html+='<button class="tab" id="tab-ev" onclick="swAv(\'ev\')">'+t("test_evolution")+'</button>';
+  html+='</div>';
+  html+='<div id="av-form">';
+  html+='<div class="alert alert-warn mb16"><i class="ti ti-alert-triangle"></i>'+t("assessment_seq")+'</div>';
+  html+='<div class="g2">';
+  // Card 1
+  html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i>'+t("identification")+'</div>';
+  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="av-atl">'+atlOps+'</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("assessment_period")+'</label><select id="av-per">';
+  html+='<option value="Sem. 0">'+t("sem0")+'</option><option value="Sem. 4">'+t("sem4")+'</option>';
+  html+='<option value="Sem. 8">'+t("sem8")+'</option><option value="Sem. 12">'+t("sem12")+'</option>';
+  html+='<option value="Sem. 16">'+t("sem16")+'</option></select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("assessment_date")+'</label><input type="date" id="av-dt" value="'+todayStr()+'"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("obs_lbl")+'</label><textarea id="av-obs" placeholder="'+t("obs_ph")+'"></textarea></div>';
+  html+='</div>';
+  // Card 2
+  html+='<div class="card"><div class="card-title"><i class="ti ti-ruler-measure"></i>'+t("body_data")+'</div><div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">'+t("weight_col")+' (kg)</label><input type="number" step="0.1" id="av-peso" placeholder="73.5"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("fat_col")+'</label><input type="number" step="0.1" id="av-gord" placeholder="12.1"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("waist_cm")+'</label><input type="number" id="av-cin" placeholder="82"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("hip_cm")+'</label><input type="number" id="av-quad" placeholder="97"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("thigh_cm")+'</label><input type="number" id="av-coxa" placeholder="54"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("calf_cm")+'</label><input type="number" id="av-pant" placeholder="36"></div>';
+  html+='</div></div>';
+  // Card 3
+  html+='<div class="card"><div class="card-title"><i class="ti ti-run"></i>'+t("physical_tests")+'</div><div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">'+t("plank_s")+'</label><input type="number" id="av-pr" placeholder="95"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("illinois_s")+'</label><input type="number" step="0.1" id="av-il" placeholder="15.8"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("sprint10")+'</label><input type="number" step="0.01" id="av-s10" placeholder="1.88"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("sprint30")+'</label><input type="number" step="0.01" id="av-s30" placeholder="4.15"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("broad_jump")+'</label><input type="number" id="av-sal" placeholder="205"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("bip_m")+'</label><input type="number" id="av-bip" placeholder="1360"></div>';
+  html+='</div></div>';
+  // Card 4
+  html+='<div class="card" style="display:flex;flex-direction:column;gap:10px">';
+  html+='<div class="card-title"><i class="ti ti-clipboard-check"></i>'+t("ref_table")+'</div>';
+  html+='<table><thead><tr><th>'+t("test_col")+'</th><th>'+t("excellent")+'</th><th>'+t("good")+'</th><th>'+t("regular")+'</th></tr></thead><tbody>';
+  html+='<tr><td>BIP</td><td>&gt;1800m</td><td>1400-1800m</td><td>1000-1400m</td></tr>';
+  html+='<tr><td>Sprint 10m</td><td>&lt;1,80s</td><td>1,80-1,99s</td><td>2,00-2,19s</td></tr>';
+  html+='<tr><td>Sprint 30m</td><td>&lt;4,00s</td><td>4,00-4,30s</td><td>4,31-4,60s</td></tr>';
+  html+='<tr><td>'+t("broad_jump")+'</td><td>&gt;220cm</td><td>200-220cm</td><td>180-199cm</td></tr>';
+  html+='<tr><td>'+t("plank_s")+'</td><td>&gt;120s</td><td>90-120s</td><td>60-89s</td></tr>';
+  html+='</tbody></table>';
+  html+='<button class="btn primary" style="margin-top:auto;justify-content:center" onclick="saveAv()"><i class="ti ti-device-floppy"></i>'+t("save_assessment")+'</button>';
+  html+='</div>';
+  html+='</div></div>';
+  // Evolution tab
+  html+='<div id="av-ev" class="hidden"><div class="g2 mb16">';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-run"></i>'+t("bip_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-bip" role="img" aria-label="bip">.</canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-bolt"></i>'+t("s10_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-s10" role="img" aria-label="s10">.</canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-bolt"></i>'+t("s30_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-s30" role="img" aria-label="s30">.</canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-arrows-move"></i>'+t("jump_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-sal" role="img" aria-label="jump">.</canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-body-scan"></i>'+t("plank_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-pr" role="img" aria-label="plank">.</canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-percentage"></i>'+t("fat_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-gd" role="img" aria-label="fat">.</canvas></div></div>';
+  html+='</div></div>';
+  return html;
+}
+function swAv(tab){
+  _aTab=tab;
+  document.getElementById("tab-form").classList.toggle("active",tab==="form");
+  document.getElementById("tab-ev").classList.toggle("active",tab==="ev");
+  document.getElementById("av-form").classList.toggle("hidden",tab!=="form");
+  document.getElementById("av-ev").classList.toggle("hidden",tab!=="ev");
+  if(tab==="ev")bldAvCharts();
+}
+function saveAv(){
+  var aid=document.getElementById("av-atl").value;
+  if(!aid){alert(t("select_athlete"));return;}
+  if(!DB.avaliacoes[aid])DB.avaliacoes[aid]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],peso:[]};
+  var av=DB.avaliacoes[aid];
+  av.bip.push(parseInt(document.getElementById("av-bip").value)||0);
+  av.s10.push(parseFloat(document.getElementById("av-s10").value)||0);
+  av.s30.push(parseFloat(document.getElementById("av-s30").value)||0);
+  av.salto.push(parseInt(document.getElementById("av-sal").value)||0);
+  av.prancha.push(parseInt(document.getElementById("av-pr").value)||0);
+  av.gord.push(parseFloat(document.getElementById("av-gord").value)||0);
+  av.peso.push(parseFloat(document.getElementById("av-peso").value)||0);
+  saveDB();alert(t("assessment_saved"));
+}
+function bldAvCharts(){
+  var keys=Object.keys(DB.avaliacoes);
+  function lc(id,getter,rev){
+    mkChart(id,{type:"line",data:{labels:sems().slice(0,4),datasets:keys.map(function(k,i){
+      var a=DB.atletas.find(function(x){return x.id===k;});
+      return{label:a?a.nome.split(" ")[0]:k,data:getter(DB.avaliacoes[k]),
+        borderColor:COLORS[i],backgroundColor:COLORS[i]+"22",tension:.35,pointRadius:4,borderWidth:2.5};
+    })},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"top",labels:{boxWidth:10,font:{size:11}}}},
+      scales:{y:{reverse:!!rev}}}});
+  }
+  setTimeout(function(){
+    lc("ch-bip",function(d){return d.bip;});
+    lc("ch-s10",function(d){return d.s10;},true);
+    lc("ch-s30",function(d){return d.s30;},true);
+    lc("ch-sal",function(d){return d.salto;});
+    lc("ch-pr",function(d){return d.prancha;});
+    lc("ch-gd",function(d){return d.gord;},true);
+  },50);
+}
+
+
+// ═══ Wellbeing ════════════════════════════════════════════════════
+var _wb={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
+function wbKeys(){return[
+  {k:"sono",lk:"wb_sleep",ic:"ti-moon"},
+  {k:"fadiga",lk:"wb_fatigue",ic:"ti-battery-2"},
+  {k:"dor",lk:"wb_pain",ic:"ti-body-scan"},
+  {k:"motivacao",lk:"wb_motivation",ic:"ti-flame"},
+  {k:"estresse",lk:"wb_stress",ic:"ti-brain"}
+];}
+function rWellbeing(){
+  var atl=DB.atletas[0];
+  if(atl)_wb=Object.assign({sono:3,fadiga:3,dor:3,motivacao:3,estresse:3},DB.wellbeing[atl.id]||{});
+  var v=igpV(_wb);var cfg=wbKeys();
+  var atlOps=DB.atletas.map(function(a){return '<option value="'+a.id+'">'+a.nome+'</option>';}).join("");
+  var html='<div class="g2">';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i>'+t("wb_register")+'</div>';
+  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="wb-sel" onchange="chWb(this.value)">'+atlOps+'</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+todayStr()+'</label><input type="date" value="'+todayStr()+'"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("sleep_hours")+'</label><input type="number" step="0.5" id="wb-hrs" placeholder="7.5" min="0" max="14"></div>';
+  html+='<div style="margin:14px 0 6px;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md)">';
+  cfg.forEach(function(c){
+    var btns="";
+    for(var vv=1;vv<=5;vv++){
+      btns+='<button class="rating-btn'+(_wb[c.k]===vv?" active":"") +'" onclick="setWb(\''+c.k+'\','+vv+')">'+vv+'</button>';
+    }
+    html+='<div class="wb-row">';
+    html+='<div class="wb-label"><i class="ti '+c.ic+'"></i>'+t(c.lk)+'</div>';
+    html+='<div class="rating-btns" id="rb-'+c.k+'">'+btns+'</div>';
+    html+='<span style="font-size:11px;color:var(--text-3);margin-left:6px" id="wbs-'+c.k+'">'+_wb[c.k]+'/5</span>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" id="wb-btn" onclick="saveWb()"><i class="ti ti-device-floppy"></i>'+t("save_igp")+'</button>';
+  html+='</div>';
+  // IGP card
+  html+='<div class="card"><div class="card-title"><i class="ti ti-heart-rate-monitor"></i>'+t("readiness_index")+'</div>';
+  html+='<div style="text-align:center;padding:20px 0 16px">';
+  html+='<div class="igp-score" id="igp-sc" style="color:'+igpCol(v)+'">'+v+'</div>';
+  html+='<div style="font-size:13px;color:var(--text-2);margin-top:4px" id="igp-lb">'+igpL(v)+'</div>';
+  html+='<div style="max-width:220px;margin:12px auto 0"><div class="prog-bar" style="height:8px"><div class="prog-fill" id="igp-bar" style="width:'+v+'%;background:'+igpCol(v)+'"></div></div>';
+  html+='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:3px"><span>0</span><span>50</span><span>100</span></div></div></div>';
+  var aCls=v>=80?"alert-ok":v>=60?"alert-warn":"alert-err";
+  var aIco=v>=80?"ti-check":v>=60?"ti-alert-triangle":"ti-x";
+  var aTxt=v>=80?t("igp_act_full"):v>=60?t("igp_act_mod"):t("igp_act_crit");
+  html+='<div class="alert '+aCls+' mb16" id="igp-al"><i class="ti '+aIco+'"></i><span id="igp-al-tx">'+aTxt+'</span></div>';
+  html+='<table><thead><tr><th>'+t("indicator")+'</th><th>'+t("score")+'</th><th>'+t("igp_weight")+'</th></tr></thead><tbody>';
+  cfg.forEach(function(c){html+='<tr><td>'+t(c.lk)+'</td><td id="row-'+c.k+'"><strong>'+_wb[c.k]+'</strong>/5</td><td>20%</td></tr>';});
+  html+='<tr style="font-weight:600"><td>'+t("igp_total")+'</td><td id="row-igp">'+v+'/100</td><td>--</td></tr>';
+  html+='</tbody></table>';
+  html+='<div style="margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:var(--radius-sm);font-size:12px;color:var(--text-3)">'+t("igp_formula")+'</div>';
+  html+='</div></div>';
+  return html;
+}
+function chWb(id){_wb=Object.assign({sono:3,fadiga:3,dor:3,motivacao:3,estresse:3},DB.wellbeing[id]||{});updWb();}
+function setWb(k,v){
+  _wb[k]=v;
+  document.getElementById("rb-"+k).querySelectorAll(".rating-btn").forEach(function(b,i){b.classList.toggle("active",i+1===v);});
+  document.getElementById("wbs-"+k).textContent=v+"/5";
+  updWb();
+}
+function updWb(){
+  var v=igpV(_wb);
+  document.getElementById("igp-sc").textContent=v;document.getElementById("igp-sc").style.color=igpCol(v);
+  document.getElementById("igp-lb").textContent=igpL(v);
+  document.getElementById("igp-bar").style.width=v+"%";document.getElementById("igp-bar").style.background=igpCol(v);
+  var al=document.getElementById("igp-al");
+  al.className="alert "+(v>=80?"alert-ok":v>=60?"alert-warn":"alert-err")+" mb16";
+  document.getElementById("igp-al-tx").textContent=v>=80?t("igp_act_full"):v>=60?t("igp_act_mod"):t("igp_act_crit");
+  document.getElementById("row-igp").innerHTML="<strong>"+v+"</strong>/100";
+  wbKeys().forEach(function(c){var el=document.getElementById("row-"+c.k);if(el)el.innerHTML="<strong>"+_wb[c.k]+"</strong>/5";});
+}
+function saveWb(){
+  var id=document.getElementById("wb-sel").value;DB.wellbeing[id]=Object.assign({},_wb);saveDB();
+  var btn=document.getElementById("wb-btn");
+  btn.innerHTML='<i class="ti ti-check"></i>'+t("saved_ok");
+  setTimeout(function(){btn.innerHTML='<i class="ti ti-device-floppy"></i>'+t("save_igp");},2000);
+}
+
+
+// ═══ Carga ════════════════════════════════════════════════════════
+function rCarga(){
+  var sess=DB.cargaSemana;
+  var cgs=sess.map(function(s){return s.rpe*s.dur;});
+  var tot=cgs.reduce(function(a,b){return a+b;},0);
+  var med=Math.round(tot/cgs.length);
+  var dp=Math.round(Math.sqrt(cgs.reduce(function(s,c){return s+(c-med)*(c-med);},0)/cgs.length));
+  var mono=dp>0?(med/dp).toFixed(1):"--";
+  var strain=dp>0?Math.round(tot*(med/dp)):0;
+  var mH=parseFloat(mono)>2;
+  var sC=strain>6000?"badge-red":strain>3000?"badge-yellow":"badge-green";
+  var u=ua();
+  var html='<div class="g4 mb16">';
+  html+='<div class="metric-card"><div class="metric-label">'+t("weekly_load_ua")+'</div><div class="metric-value">'+tot+' '+u+'</div><div class="metric-sub">'+t("target_load")+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("avg_session")+'</div><div class="metric-value">'+med+' '+u+'</div><div class="metric-sub">'+sess.length+' '+t("sessions_lbl")+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("monotony_lbl")+'</div><div class="metric-value" style="color:'+(mH?"var(--red-700)":"var(--green-700)")+'">'+mono+'</div><div class="metric-sub">'+(mH?t("vary_loads"):t("ideal_range"))+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("strain_fat")+'</div><div class="metric-value">'+strain+'</div><div class="metric-sub"><span class="badge '+sC+'">'+(strain>6000?t("strain_high"):strain>3000?t("strain_mod"):t("strain_ok"))+'</span></div></div>';
+  html+='</div>';
+  if(mH)html+='<div class="alert alert-warn mb16"><i class="ti ti-alert-triangle"></i>'+t("mono_alert").replace("{v}",mono)+'</div>';
+  if(strain>6000)html+='<div class="alert alert-err mb16"><i class="ti ti-x"></i>'+t("strain_alert").replace("{v}",strain)+'</div>';
+  var rpeColors=["#a5d6a7","#c8e6c9","#fff176","#ffcc02","#ffa726","#ff7043","#ef5350","#e53935","#c62828","#b71c1c"];
+  var rpeBar=rpeColors.map(function(c){return '<div style="background:'+c+'"></div>';}).join("");
+  html+='<div class="g2 mb16">';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-plus-circle"></i>'+t("reg_session")+'</div>';
+  html+='<div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">'+t("sess_date")+'</label><input type="date" id="nc-dt" value="'+todayStr()+'"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("sess_type")+'</label><select id="nc-tp">';
+  html+='<option value="Fisico">'+t("sp")+'</option>';
+  html+='<option value="Tecnico/Tatico">'+t("st")+'</option>';
+  html+='<option value="Amistoso">'+t("sf")+'</option>';
+  html+='<option value="Jogo-treino">'+t("sm")+'</option>';
+  html+='<option value="Regenerativo">'+t("sr")+'</option>';
+  html+='<option value="Avaliacao">'+t("sa")+'</option>';
+  html+='</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("dur_min")+'</label><input type="number" id="nc-dur" placeholder="90" oninput="liveCarga()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("rpe_avg")+'</label><input type="number" id="nc-rpe" min="0" max="10" step="1" placeholder="6" oninput="liveCarga()"></div>';
+  html+='</div>';
+  html+='<div class="carga-calc" id="carga-live">'+t("load_fill")+'</div>';
+  html+='<div style="margin-top:10px;font-size:12px;color:var(--text-3)">'+t("rpe_hint")+'</div>';
+  html+='<div class="rpe-bar" style="margin-bottom:10px">'+rpeBar+'</div>';
+  html+='<button class="btn primary" style="width:100%;justify-content:center" onclick="addSess()"><i class="ti ti-plus"></i>'+t("add_week_btn")+'</button>';
+  html+='</div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-chart-bar"></i>'+t("week_chart")+'</div>';
+  html+='<div style="position:relative;height:240px"><canvas id="ch-cw" role="img" aria-label="weekly">.</canvas></div></div>';
+  html+='</div>';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-list-details"></i>'+t("week_detail")+'</div>';
+  html+='<div class="table-wrap"><table>';
+  html+='<thead><tr><th>'+t("day_col")+'</th><th>'+t("type_col")+'</th><th>'+t("dur_col")+'</th><th>RPE</th><th>'+t("load_ua")+'</th><th>'+t("pct_week")+'</th></tr></thead><tbody>';
+  sess.forEach(function(s,i){
+    var u2=cgs[i];var pct=Math.round(u2/tot*100);
+    var rpeCls=s.rpe>=8?"badge-red":s.rpe>=6?"badge-yellow":"badge-green";
+    html+='<tr><td><strong>'+s.dia+'</strong></td><td>'+sessT(s.tipo)+'</td><td>'+s.dur+' min</td>';
+    html+='<td><span class="badge '+rpeCls+'">'+s.rpe+'/10</span></td>';
+    html+='<td><strong>'+u2+'</strong></td>';
+    html+='<td style="width:180px"><div style="display:flex;align-items:center;gap:8px"><span style="min-width:34px;font-size:12px">'+pct+'%</span>';
+    html+='<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%"></div></div></div></td>';
+    html+='</tr>';
+  });
+  html+='</tbody><tfoot><tr><td colspan="4">'+t("weekly_total")+'</td><td>'+tot+' '+u+'</td><td>100%</td></tr></tfoot>';
+  html+='</table></div></div>';
+  return html;
+}
+function liveCarga(){
+  var dur=parseFloat(document.getElementById("nc-dur").value)||0;
+  var rpe=parseFloat(document.getElementById("nc-rpe").value)||0;
+  var el=document.getElementById("carga-live");var u=ua();
+  if(!dur||!rpe){el.textContent=t("load_fill");return;}
+  var u2=Math.round(dur*rpe);
+  var col=u2>600?"var(--red-700)":u2>350?"var(--yellow-700)":"var(--green-700)";
+  var lbl=u2>600?t("load_high"):u2>350?t("load_mod"):t("load_low");
+  el.innerHTML='<strong>'+u2+' '+u+'</strong> (RPE '+rpe+' x '+dur+' min) -- <span style="color:'+col+'">'+lbl+'</span>';
+}
+function addSess(){
+  var dur=parseFloat(document.getElementById("nc-dur").value);
+  var rpe=parseFloat(document.getElementById("nc-rpe").value);
+  var tipo=document.getElementById("nc-tp").value;
+  var dt=document.getElementById("nc-dt").value;
+  if(!dur||!rpe){alert(t("fill_err"));return;}
+  DB.cargaSemana.push({dia:dayN(dt),tipo:tipo,dur:dur,rpe:rpe});saveDB();
+  destroyCharts();document.getElementById("content").innerHTML=rCarga();afterRender("carga");
+}
+
+
+// ═══ Presenca ═════════════════════════════════════════════════════
+function rPresenca(){
+  var html='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>'+t("pres_legend")+'</div>';
+  html+='<div class="card"><div class="table-wrap"><table>';
+  html+='<thead><tr><th style="min-width:160px">'+t("nm_atletas")+'</th>';
+  DB.treinoDatas.forEach(function(d){html+='<th class="pres-cell" style="font-size:10px">'+d+'</th>';});
+  html+='<th style="min-width:90px">'+t("attendance_col")+'</th></tr></thead><tbody>';
+  DB.atletas.forEach(function(a){
+    var arr=DB.presenca[a.id]||[];var pct=ppct(arr);
+    var pCol=pct>=80?"var(--green-700)":pct>=60?"var(--yellow-700)":"var(--red-700)";
+    html+='<tr><td><div style="display:flex;align-items:center;gap:9px"><div class="avatar">'+ini(a.nome)+'</div>';
+    html+='<div><div style="font-weight:500">'+a.nome+'</div><div style="font-size:11px;color:var(--text-3)">'+a.pos+'</div></div></div></td>';
+    DB.treinoDatas.forEach(function(_,i){
+      var val=arr[i];var isL=a.status==="Lesionado";
+      var cls=val===1?"badge-green":(isL&&val!==1)?"badge-red":"badge-yellow";
+      var lbl=val===1?t("pres_p"):(isL&&val!==1)?t("pres_l"):t("pres_f");
+      html+='<td class="pres-cell"><span class="badge '+cls+'">'+lbl+'</span></td>';
+    });
+    html+='<td><div style="font-weight:600;font-size:13px">'+pct+'%</div>';
+    html+='<div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+pCol+'"></div></div></td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+// ═══ Lesoes ═══════════════════════════════════════════════════════
+function closeLesaoModal(){document.getElementById("modal-lesao").classList.add("hidden");}
+function openLesaoModal(){
+  var sel=document.getElementById("l-atleta");sel.innerHTML="";
+  atlOpts(sel);document.getElementById("l-inicio").value=todayStr();
+  document.getElementById("modal-lesao").classList.remove("hidden");
+}
+function saveLesao(){
+  var aid=document.getElementById("l-atleta").value;
+  var a=DB.atletas.find(function(x){return x.id===aid;});if(!a)return;
+  var ret=document.getElementById("l-retorno").value;
+  DB.lesoes.push({atleta:a.nome,inicio:document.getElementById("l-inicio").value,
+    retorno:ret||"",regiao:document.getElementById("l-regiao").value+" ("+document.getElementById("l-lado").value+")",
+    tipo:document.getElementById("l-tipo").value,mec:document.getElementById("l-mec").value,
+    obs:document.getElementById("l-obs").value,status:ret?"Recuperado":"Em tratamento"});
+  if(!ret){var at=DB.atletas.find(function(x){return x.id===aid;});if(at)at.status="Lesionado";}
+  saveDB();closeLesaoModal();destroyCharts();document.getElementById("content").innerHTML=rLesoes();
+}
+function rLesoes(){
+  var ativas=DB.lesoes.filter(function(l){return l.status==="Em tratamento";}).length;
+  var recov=DB.lesoes.filter(function(l){return l.status==="Recuperado";}).length;
+  var html='<div style="display:flex;justify-content:flex-end;margin-bottom:16px">';
+  html+='<button class="btn primary" onclick="openLesaoModal()"><i class="ti ti-plus"></i>'+t("register_injury")+'</button></div>';
+  html+='<div class="g2 mb16" style="max-width:420px">';
+  html+='<div class="metric-card"><div class="metric-label">'+t("active_inj")+'</div><div class="metric-value metric-down">'+ativas+'</div><div class="metric-sub">'+t("sidelined_n")+'</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("total_inj")+'</div><div class="metric-value">'+DB.lesoes.length+'</div><div class="metric-sub">'+t("recovered_n").replace("{n}",recov)+'</div></div>';
+  html+='</div>';
+  html+='<div class="card"><div class="table-wrap"><table>';
+  html+='<thead><tr><th>'+t("ll_atleta")+'</th><th>'+t("start_col")+'</th><th>'+t("return_col")+'</th><th>'+t("days_col")+'</th><th>'+t("region_col")+'</th><th>'+t("ll_tipo")+'</th><th>'+t("mech_col")+'</th><th>'+t("status_col")+'</th></tr></thead><tbody>';
+  DB.lesoes.forEach(function(l){
+    var dias="--";
+    if(l.inicio&&l.retorno&&l.retorno!==""){try{dias=Math.round((new Date(l.retorno)-new Date(l.inicio))/86400000)+" "+t("days_lbl");}catch(e){}}
+    else if(l.inicio&&l.status==="Em tratamento"){try{dias=Math.round((new Date()-new Date(l.inicio))/86400000)+" "+t("days_lbl")+"+";}catch(e){}}
+    var st=l.status==="Recuperado"?t("recovered"):t("in_treatment");
+    html+='<tr><td><strong>'+l.atleta+'</strong></td>';
+    html+='<td>'+fmtD(l.inicio)+'</td><td>'+(l.retorno?fmtD(l.retorno):"--")+'</td>';
+    html+='<td>'+dias+'</td><td>'+l.regiao+'</td>';
+    html+='<td><span class="badge badge-gray">'+l.tipo+'</span></td><td>'+l.mec+'</td>';
+    html+='<td><span class="badge '+(l.status==="Recuperado"?"badge-green":"badge-red")+'">'+st+'</span></td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  return html;
+}
+
+
+// ═══ Relatorio ════════════════════════════════════════════════════
+function rRelatorio(){
+  var atlOps=DB.atletas.map(function(a){return '<option value="'+a.id+'">'+a.nome+' ('+a.pos+')</option>';}).join("");
+  var html='<div class="g2">';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-settings"></i>'+t("cfg_report")+'</div>';
+  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="rel-atl">'+atlOps+'</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("report_period")+'</label><select id="rel-per">';
+  html+='<option>'+t("sem4")+'</option><option>'+t("sem8")+'</option><option>'+t("sem12")+'</option><option>'+t("sem16")+'</option>';
+  html+='</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("strengths")+'</label><textarea id="rel-for" placeholder="'+t("str_ph")+'"></textarea></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("improvement")+'</label><textarea id="rel-mel" placeholder="'+t("imp_ph")+'"></textarea></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("recommendations")+'</label><textarea id="rel-rec" placeholder="'+t("rec_ph")+'"></textarea></div>';
+  html+='<div style="display:flex;gap:8px">';
+  html+='<button class="btn primary" style="flex:1;justify-content:center" onclick="genRel()"><i class="ti ti-report"></i>'+t("gen_report")+'</button>';
+  html+='<button class="btn" onclick="printRel()"><i class="ti ti-printer"></i>'+t("print_report")+'</button>';
+  html+='</div></div>';
+  html+='<div id="rel-out" style="flex:1"><div style="padding:40px 20px;text-align:center;color:var(--text-3)">';
+  html+='<i class="ti ti-file-analytics" style="font-size:48px;display:block;margin-bottom:8px"></i>'+t("rep_ph")+'</div></div>';
+  html+='</div>';
+  return html;
+}
+function genRel(){
+  var id=document.getElementById("rel-atl").value;
+  var a=DB.atletas.find(function(x){return x.id===id;});if(!a)return;
+  var av=DB.avaliacoes[id];var w=DB.wellbeing[id];
+  var pp=ppct(DB.presenca[id]||[]);var v=igpV(w);
+  var per=document.getElementById("rel-per").value;
+  var fr=document.getElementById("rel-for").value||"--";
+  var ml=document.getElementById("rel-mel").value||"--";
+  var rc=document.getElementById("rel-rec").value||"--";
+  var u=ua();
+  var html='<div class="card" id="rel-print" style="border:2px solid var(--green-700)">';
+  html+='<div class="report-header"><h2>'+t("indiv_perf")+'</h2>';
+  html+='<p>'+t("period_lbl")+': '+per+' | '+t("gen_on")+': '+new Date().toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{day:"2-digit",month:"long",year:"numeric"})+'</p></div>';
+  html+='<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">';
+  html+='<div class="avatar avatar-lg">'+ini(a.nome)+'</div>';
+  html+='<div><div style="font-size:18px;font-weight:600">'+a.nome+'</div>';
+  html+='<div style="font-size:12px;color:var(--text-2)">'+a.pos+' &middot; '+ageOf(a.nasc)+' '+t("years")+' &middot; '+a.pe+' &middot; '+a.id+'</div></div>';
+  html+='<span class="badge '+stCls(a.status)+'" style="margin-left:auto">'+stTxt(a.status)+'</span></div>';
+  html+='<div class="g4 mb16">';
+  html+='<div class="metric-card"><div class="metric-label">'+t("curr_weight")+'</div><div class="metric-value">'+a.peso+'</div><div class="metric-sub">kg</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("fat_lbl")+'</div><div class="metric-value">'+a.gord+'</div><div class="metric-sub">%</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("attendance_col")+'</div><div class="metric-value">'+pp+'</div><div class="metric-sub">%</div></div>';
+  html+='<div class="metric-card"><div class="metric-label">'+t("igp_col")+'</div><div class="metric-value" style="color:'+igpCol(v)+'">'+v+'</div><div class="metric-sub">/100</div></div>';
+  html+='</div>';
+  if(av){
+    html+='<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">'+t("test_evolution")+'</div>';
+    html+='<div class="table-wrap mb16"><table>';
+    html+='<thead><tr><th>'+t("test_col")+'</th><th>'+t("initial_aval")+'</th><th>'+t("current_lbl")+'</th><th>'+t("variation_lbl")+'</th><th>'+t("trend_lbl")+'</th></tr></thead><tbody>';
+    var tests=[["BIP/Yo-Yo","bip","m",false],[t("sprint10"),"s10","s",true],[t("sprint30"),"s30","s",true],[t("broad_jump"),"salto","cm",false],[t("plank_s"),"prancha","s",false]];
+    tests.forEach(function(row){
+      var nm=row[0],key=row[1],unit=row[2],menor=row[3];
+      if(!av[key]||!av[key].length)return;
+      var ini2=av[key][0],cur=av[key][av[key].length-1];
+      var delta=menor?(ini2-cur):(cur-ini2);var ok=delta>0;
+      var col=ok?"var(--green-700)":"var(--red-700)";
+      var diff=menor?(ini2-cur).toFixed(2):(cur-ini2);
+      html+='<tr><td>'+nm+'</td><td>'+ini2+' '+unit+'</td><td><strong>'+cur+' '+unit+'</strong></td>';
+      html+='<td style="color:'+col+'">'+(ok?"+":"")+diff+' '+unit+'</td>';
+      html+='<td><span class="badge '+(ok?"badge-green":"badge-red")+'">'+(ok?t("impr_badge"):t("decline_badge"))+'</span></td></tr>';
+    });
+    html+='</tbody></table></div>';
+  } else {
+    html+='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>'+t("no_data")+'</div>';
+  }
+  html+='<div class="g2 mb16">';
+  html+='<div style="padding:14px;background:var(--green-50);border-radius:var(--radius-md);border-left:3px solid var(--green-700)">';
+  html+='<div style="font-size:12px;font-weight:600;color:var(--green-700);margin-bottom:6px"><i class="ti ti-thumb-up" style="font-size:14px;vertical-align:-2px"></i> '+t("str_lbl")+'</div>';
+  html+='<div style="font-size:13px;color:var(--green-800);line-height:1.6">'+fr+'</div></div>';
+  html+='<div style="padding:14px;background:var(--yellow-50);border-radius:var(--radius-md);border-left:3px solid var(--yellow-700)">';
+  html+='<div style="font-size:12px;font-weight:600;color:var(--yellow-700);margin-bottom:6px"><i class="ti ti-target" style="font-size:14px;vertical-align:-2px"></i> '+t("imp_lbl")+'</div>';
+  html+='<div style="font-size:13px;color:#5d3f00;line-height:1.6">'+ml+'</div></div></div>';
+  html+='<div style="padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md)">';
+  html+='<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px"><i class="ti ti-notes" style="font-size:14px;vertical-align:-2px"></i> '+t("rec_lbl")+'</div>';
+  html+='<div style="font-size:13px;color:var(--text-1);line-height:1.6">'+rc+'</div></div>';
+  html+='<div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-3)">';
+  html+='<span>FutPerformance &middot; '+t("brand")+'</span>';
+  html+='<span>Ref.: A. C. Gomes &middot; J. P. Medina &middot; J. A. Rodrigues &middot; Foster RPE</span></div></div>';
+  document.getElementById("rel-out").innerHTML=html;
+}
+function printRel(){if(!document.getElementById("rel-print")){alert(t("gen_first"));return;}window.print();}
+
+
+// ═══ afterRender ══════════════════════════════════════════════════
+function afterRender(pg){
+  var u=ua();
+  if(pg==="dashboard"){
+    var cgs=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+    setTimeout(function(){
+      mkChart("ch-c-d",{type:"bar",data:{
+        labels:DB.cargaSemana.map(function(s){return s.dia;}),
+        datasets:[{label:u,data:cgs,backgroundColor:["#2e7d32","#1565c0","#6a1b9a","#e65100"],borderRadius:5}]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"rgba(0,0,0,.05)"}}}}});
+      var bk=Object.keys(DB.avaliacoes);
+      mkChart("ch-b-d",{type:"line",data:{
+        labels:sems(),
+        datasets:bk.map(function(k,i){
+          var a=DB.atletas.find(function(x){return x.id===k;});
+          return{label:a?a.nome.split(" ")[0]:k,data:DB.avaliacoes[k].bip,
+            borderColor:COLORS[i],backgroundColor:COLORS[i]+"18",
+            tension:.35,pointRadius:4,borderWidth:2.5,fill:true};
+        })
+      },options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:"top",labels:{boxWidth:10,font:{size:11},usePointStyle:true}}},
+        scales:{y:{grid:{color:"rgba(0,0,0,.05)"}}}}});
+    },50);
+  }
+  if(pg==="carga"){
+    var cgs2=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+    setTimeout(function(){
+      mkChart("ch-cw",{type:"bar",data:{
+        labels:DB.cargaSemana.map(function(s){return s.dia;}),
+        datasets:[{label:u,data:cgs2,
+          backgroundColor:cgs2.map(function(c){return c>600?"#e53935":c>350?"#ffa726":"#43a047";}),
+          borderRadius:5}]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"rgba(0,0,0,.05)"}}}}});
+    },50);
+  }
+}
+
+// ═══ Init ══════════════════════════════════════════════════════════
+document.getElementById("content").innerHTML = rDashboard();
+afterRender("dashboard");
+
+</script>
+</body>
+</html>
