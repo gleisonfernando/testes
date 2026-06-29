@@ -914,6 +914,7 @@ function swAv(tab){
 function getEl(id){ var el=document.getElementById(id); return el?el.value:""; }
 
 function saveAv(){
+  try {
   var aid=document.getElementById("av-atl").value;
   if(!aid){alert(t("select_athlete"));return;}
   if(!DB.avaliacoes[aid])DB.avaliacoes[aid]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],gordJP:[],peso:[],massaMagra:[],massaGorda:[],coxaE:[],coxaD:[],pantE:[],pantD:[]};
@@ -957,6 +958,7 @@ function saveAv(){
     fetch(SHEETS_URL+"?"+params,{method:"GET",mode:"no-cors"}).catch(function(){});
   }
   alert(t("assessment_saved"));
+  } catch(err) { alert("Erro JS: " + err.message); }
 }
 function bldAvCharts(){
   var keys=Object.keys(DB.avaliacoes);
