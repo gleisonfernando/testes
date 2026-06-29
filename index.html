@@ -911,17 +911,19 @@ function swAv(tab){
   if(tab==="ev") bldAvCharts();
   if(tab==="asym") renderAssymPanel();
 }
+function getEl(id){ var el=document.getElementById(id); return el?el.value:""; }
+
 function saveAv(){
   var aid=document.getElementById("av-atl").value;
   if(!aid){alert(t("select_athlete"));return;}
   if(!DB.avaliacoes[aid])DB.avaliacoes[aid]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],gordJP:[],peso:[],massaMagra:[],massaGorda:[],coxaE:[],coxaD:[],pantE:[],pantD:[]};
   var av=DB.avaliacoes[aid];
-  av.bip.push(parseInt(document.getElementById("av-bip").value)||0);
-  av.s10.push(parseFloat(document.getElementById("av-s10").value)||0);
-  av.s30.push(parseFloat(document.getElementById("av-s30").value)||0);
-  av.salto.push(parseInt(document.getElementById("av-sal").value)||0);
-  av.prancha.push(parseInt(document.getElementById("av-pr").value)||0);
-  av.peso.push(parseFloat(document.getElementById("av-peso").value)||0);
+  av.bip.push(parseInt(getEl("av-bip"))||0);
+  av.s10.push(parseFloat(getEl("av-s10"))||0);
+  av.s30.push(parseFloat(getEl("av-s30"))||0);
+  av.salto.push(parseInt(getEl("av-sal"))||0);
+  av.prancha.push(parseInt(getEl("av-pr"))||0);
+  av.peso.push(parseFloat(getEl("av-peso"))||0);
   // Composição corporal
   var comp = window._lastComposicao||{};
   av.gord.push(comp.gordNavy||0);
@@ -946,18 +948,18 @@ function saveAv(){
       +"&atleta_id="+encodeURIComponent(aid)
       +"&atleta_nome="+encodeURIComponent(atl?atl.nome:"")
       +"&periodo="+encodeURIComponent(document.getElementById("av-per").value||"")
-      +"&peso="+encodeURIComponent(document.getElementById("av-peso").value||0)
+      +"&peso="+encodeURIComponent(getEl("av-peso")||0)
       +"&gord="+(comp.gordNavy||0)
       +"&gordJP="+(comp.gordJP||0)
       +"&magra="+(comp.massaMagra||0)
       +"&gorda="+(comp.massaGorda||0)
       +"&coxaE="+(asym.coxaE||0)+"&coxaD="+(asym.coxaD||0)
       +"&pantE="+(asym.pantE||0)+"&pantD="+(asym.pantD||0)
-      +"&prancha="+(parseInt(document.getElementById("av-pr").value)||0)
-      +"&s10="+(parseFloat(document.getElementById("av-s10").value)||0)
-      +"&s30="+(parseFloat(document.getElementById("av-s30").value)||0)
-      +"&salto="+(parseInt(document.getElementById("av-sal").value)||0)
-      +"&bip="+(parseInt(document.getElementById("av-bip").value)||0);
+      +"&prancha="+(parseInt(getEl("av-pr"))||0)
+      +"&s10="+(parseFloat(getEl("av-s10"))||0)
+      +"&s30="+(parseFloat(getEl("av-s30"))||0)
+      +"&salto="+(parseInt(getEl("av-sal"))||0)
+      +"&bip="+(parseInt(getEl("av-bip"))||0);
     fetch(SHEETS_URL+"?"+params,{method:"GET",mode:"no-cors"}).catch(function(){});
   }
   alert(t("assessment_saved"));
