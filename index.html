@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FutPerformance</title>
+<title>SKBrederis 1B</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -131,7 +131,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="brand">
       <div class="brand-logo">
         <div class="brand-icon">&#9917;</div>
-        <span class="brand-name">FutPerformance</span>
+        <span class="brand-name">SKBrederis 1B</span>
       </div>
       <div class="brand-sub" id="sb-brand">Sistema de Monitoramento Esportivo</div>
     </div>
@@ -163,7 +163,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="topbar">
       <h1 id="page-title">Dashboard</h1>
       <div class="topbar-meta">
-        <span class="season-badge" id="sb-season">Temporada 2025</span>
+        <span class="season-badge" id="sb-season">Temporada 2026/2027</span>
         <span id="current-date"></span>
         <div class="lang-switcher">
           <button class="lang-btn active" onclick="setLang('pt')">PT</button>
@@ -256,9 +256,43 @@ textarea{min-height:80px;resize:vertical}
 </div>
 <script>
 
+
+// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
+// Após publicar o Apps Script, cole a URL aqui:
+var SHEETS_URL = "https://script.google.com/macros/s/AKfycbxuXq0VyABBY9gLa7RX6EgRFTCsyQpYooL3dnkOMM6mVQgSUXnP5kzmL2E9UZ5WCBTkIg/exec"; // ex: "https://script.google.com/macros/s/AKfycbxuXq0VyABBY9gLa7RX6EgRFTCsyQpYooL3dnkOMM6mVQgSUXnP5kzmL2E9UZ5WCBTkIg/exec"
+var _wbFromSheets = {}; // cache dos dados vindos do Sheets
+
+function fetchWellbeingFromSheets(callback) {
+  if (!SHEETS_URL) { if(callback) callback(); return; }
+  fetch(SHEETS_URL)
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res.status==="ok" && res.wellbeing){
+        // Merge: converte formato Sheets → formato DB.wellbeing
+        Object.keys(res.wellbeing).forEach(function(id){
+          var d = res.wellbeing[id];
+          _wbFromSheets[id] = {
+            sono:      parseInt(d.sono)||3,
+            fadiga:    parseInt(d.fadiga)||3,
+            dor:       parseInt(d.dor)||3,
+            motivacao: parseInt(d.motivacao)||3,
+            estresse:  parseInt(d.estresse)||3,
+            igp:       parseInt(d.igp)||0,
+            data:      d.data||"",
+            hoje:      d.hoje||false
+          };
+          // Actualiza DB.wellbeing com dados do Sheets
+          DB.wellbeing[id] = _wbFromSheets[id];
+        });
+      }
+      if(callback) callback();
+    })
+    .catch(function(){ if(callback) callback(); });
+}
+
 var TR = {
 pt:{
-  brand:"Sistema de Monitoramento Esportivo", season:"Temporada 2025",
+  brand:"Sistema de Monitoramento Esportivo", season:"Temporada 2026/2027",
   nl_overview:"Visao geral", nl_assessments:"Avaliacoes", nl_monitoring:"Monitoramento", nl_reports:"Relatorios",
   nm_dashboard:"Dashboard", nm_atletas:"Atletas", nm_avaliacao:"Avaliacao fisica",
   nm_wellbeing:"Bem-estar diario", nm_carga:"Controle de carga",
@@ -314,6 +348,36 @@ pt:{
   impr_badge:"Melhora", decline_badge:"Queda",
   no_data:"Sem dados de evolucao para este atleta. Realize a avaliacao fisica primeiro.",
   str_lbl:"Pontos fortes", imp_lbl:"Pontos de melhoria", rec_lbl:"Recomendacoes do preparador fisico",
+  asym_tab:"Assimetria bilateral",
+  bilateral_title:"Assimetria bilateral — comparacao entre lados",
+  perim_gordura:"Perimetros para composicao corporal",
+  neck_cm:"Pescoco",
+  thigh_lbl:"Coxa",
+  calf_lbl:"Panturrilha",
+  left:"Esquerdo",
+  right:"Direito",
+  athletes:"atletas",
+  asym_ref:"Assimetria bilateral",
+  height_cm:"Altura",
+  fat_navy:"% Gordura (Marinha)",
+  fat_jp:"% Gordura (J&P)",
+  lean_mass:"Massa magra",
+  fat_mass:"Massa gorda",
+  excess_fat:"Gordura excedente",
+  ideal_fat_range:"Faixa ideal futebol: 8-14%",
+  asym_ok:"Simetria adequada",
+  asym_warn:"Atencao: assimetria moderada",
+  asym_alert:"Assimetria significativa — risco de lesao",
+  diff_cm:"Diferenca",
+  diff_pct:"Diferenca %",
+  dom_side:"Lado dominante",
+  nd_side:"Lado nao dominante",
+  both_methods:"Comparacao entre metodos",
+  method_navy:"Marinha Americana",
+  method_jp:"Jackson & Pollock",
+  comp_summary:"Composicao corporal estimada",
+  no_asym_data:"Sem dados de assimetria para este atleta. Registre uma avaliacao primeiro.",
+  asym_history:"Historico de assimetrias",
   mon:"Segunda", tue:"Terca", wed:"Quarta", thu:"Quinta", fri:"Sexta", sat:"Sabado", sun:"Domingo",
   active_athletes:"Atletas ativos", of:"de", registered:"cadastrados",
   injured_lbl:"Lesionados", sidelined:"afastados agora",
@@ -364,7 +428,7 @@ pt:{
   curr_weight:"Peso atual", fat_lbl:"% Gordura"
 },
 de:{
-  brand:"Sportliches Monitoring-System", season:"Saison 2025",
+  brand:"Sportliches Monitoring-System", season:"Saison 2026/2027",
   nl_overview:"Ubersicht", nl_assessments:"Auswertungen", nl_monitoring:"Uberwachung", nl_reports:"Berichte",
   nm_dashboard:"Dashboard", nm_atletas:"Spieler", nm_avaliacao:"Korperliche Bewertung",
   nm_wellbeing:"Tagliches Wohlbefinden", nm_carga:"Belastungssteuerung",
@@ -420,6 +484,36 @@ de:{
   impr_badge:"Verbesserung", decline_badge:"Ruckgang",
   no_data:"Keine Entwicklungsdaten. Zuerst korperliche Bewertung durchfuhren.",
   str_lbl:"Starken", imp_lbl:"Verbesserungspunkte", rec_lbl:"Empfehlungen des Konditionstrainers",
+  asym_tab:"Bilaterale Asymmetrie",
+  bilateral_title:"Bilaterale Asymmetrie — Seitenvergleich",
+  perim_gordura:"Umfange fur Korperzusammensetzung",
+  neck_cm:"Hals",
+  thigh_lbl:"Oberschenkel",
+  calf_lbl:"Wade",
+  left:"Links",
+  right:"Rechts",
+  athletes:"Athleten",
+  asym_ref:"Bilaterale Asymmetrie",
+  height_cm:"Grosse",
+  fat_navy:"% Korperfett (Marine)",
+  fat_jp:"% Korperfett (J&P)",
+  lean_mass:"Magermasse",
+  fat_mass:"Fettmasse",
+  excess_fat:"Uberschussiges Fett",
+  ideal_fat_range:"Idealbereich Fussball: 8-14%",
+  asym_ok:"Symmetrie ausreichend",
+  asym_warn:"Achtung: moderate Asymmetrie",
+  asym_alert:"Erhebliche Asymmetrie — Verletzungsrisiko",
+  diff_cm:"Differenz",
+  diff_pct:"Differenz %",
+  dom_side:"Dominante Seite",
+  nd_side:"Nicht dominante Seite",
+  both_methods:"Methodenvergleich",
+  method_navy:"US Marine",
+  method_jp:"Jackson & Pollock",
+  comp_summary:"Geschatzte Korperzusammensetzung",
+  no_asym_data:"Keine Asymmetriedaten fur diesen Spieler. Zuerst Bewertung durchfuhren.",
+  asym_history:"Asymmetrieverlauf",
   mon:"Montag", tue:"Dienstag", wed:"Mittwoch", thu:"Donnerstag", fri:"Freitag", sat:"Samstag", sun:"Sonntag",
   active_athletes:"Aktive Spieler", of:"von", registered:"registriert",
   injured_lbl:"Verletzt", sidelined:"aktuell gesperrt",
@@ -526,12 +620,12 @@ var DB = {
     "ATL004":[1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
     "ATL005":[1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,0]
   },
-  treinoDatas:["Seg 31/03","Ter 01/04","Qui 03/04","Sab 05/04","Seg 07/04","Ter 08/04","Qui 10/04","Sab 12/04","Seg 14/04","Ter 15/04","Qui 17/04","Sab 19/04","Seg 21/04","Ter 22/04","Qui 24/04","Sab 26/04"],
+  treinoDatas:["2026-06-29", "2026-06-30", "2026-07-02", "2026-07-04", "2026-07-06", "2026-07-07", "2026-07-09", "2026-07-11", "2026-07-13", "2026-07-14", "2026-07-16", "2026-07-18", "2026-07-20", "2026-07-21", "2026-07-23", "2026-07-25"],
   cargaSemana:[
-    {dia:"Segunda",tipo:"Fisico",dur:75,rpe:7},
-    {dia:"Terca",tipo:"Tecnico/Tatico",dur:90,rpe:6},
-    {dia:"Quinta",tipo:"Tecnico/Tatico",dur:90,rpe:5},
-    {dia:"Sabado",tipo:"Amistoso",dur:95,rpe:8}
+    {dia:"mon",tipo:"Fisico",dur:75,rpe:7},
+    {dia:"tue",tipo:"Tecnico/Tatico",dur:90,rpe:6},
+    {dia:"thu",tipo:"Tecnico/Tatico",dur:90,rpe:5},
+    {dia:"sat",tipo:"Amistoso",dur:95,rpe:8}
   ],
   lesoes:[
     {atleta:"Pedro Alves",inicio:"2025-05-10",retorno:"",regiao:"Tornozelo esq.",tipo:"Ligamentar",mec:"Contato",status:"Em tratamento"},
@@ -539,8 +633,8 @@ var DB = {
   ],
   nextId:6
 };
-try{var s=localStorage.getItem("fp4");if(s)Object.assign(DB,JSON.parse(s));}catch(e){}
-function saveDB(){try{localStorage.setItem("fp4",JSON.stringify(DB));}catch(e){}}
+try{var s=localStorage.getItem("skb1b");if(s)Object.assign(DB,JSON.parse(s));}catch(e){}
+function saveDB(){try{localStorage.setItem("skb1b",JSON.stringify(DB));}catch(e){}}
 
 
 // ═══ Helpers ══════════════════════════════════════════════════════
@@ -556,7 +650,8 @@ function stTxt(s){return s==="Ativo"?t("st_active"):s==="Lesionado"?t("st_injure
 function stCls(s){return s==="Ativo"?"badge-green":s==="Lesionado"?"badge-red":"badge-gray";}
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function fmtD(d){if(!d||d==="")return "--";try{return new Date(d+"T12:00:00").toLocaleDateString(LANG==="de"?"de-DE":"pt-BR");}catch(e){return d;}}
-function dayN(d){var m={0:t("sun"),1:t("mon"),2:t("tue"),3:t("wed"),4:t("thu"),5:t("fri"),6:t("sat")};return m[new Date(d+"T12:00:00").getDay()]||d;}
+function dayN(d){var m={0:"sun",1:"mon",2:"tue",3:"wed",4:"thu",5:"fri",6:"sat"};return m[new Date(d+"T12:00:00").getDay()]||"mon";}
+function diaTxt(k){return t(k)||k;}
 function sessT(s){var m={"Fisico":t("sp"),"Tecnico/Tatico":t("st"),"Amistoso":t("sf"),"Jogo-treino":t("sm"),"Regenerativo":t("sr"),"Avaliacao":t("sa")};return m[s]||s;}
 function ua(){return t("ua");}
 function sems(){return["Sem. 0","Sem. 4","Sem. 8","Sem. 12"];}
@@ -579,8 +674,15 @@ document.querySelectorAll(".nav-item[data-page]").forEach(function(el){
     el.classList.add("active");
     document.getElementById("page-title").textContent = t(PG_KEYS[pg]||pg);
     destroyCharts();
-    document.getElementById("content").innerHTML = render(pg);
-    afterRender(pg);
+    if(SHEETS_URL && (pg==="dashboard"||pg==="wellbeing")){
+      fetchWellbeingFromSheets(function(){
+        document.getElementById("content").innerHTML = render(pg);
+        afterRender(pg);
+      });
+    } else {
+      document.getElementById("content").innerHTML = render(pg);
+      afterRender(pg);
+    }
   });
 });
 document.getElementById("current-date").textContent = new Date().toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{weekday:"short",day:"2-digit",month:"short",year:"numeric"});
@@ -697,13 +799,17 @@ function rAvaliacao(){
   html+='<div class="tab-bar">';
   html+='<button class="tab active" id="tab-form" onclick="swAv(\'form\')">'+t("register_assessment")+'</button>';
   html+='<button class="tab" id="tab-ev" onclick="swAv(\'ev\')">'+t("test_evolution")+'</button>';
+  html+='<button class="tab" id="tab-asym" onclick="swAv(\'asym\')">'+t("asym_tab")+'</button>';
   html+='</div>';
+
+  // ── FORM TAB ────────────────────────────────────────────────────
   html+='<div id="av-form">';
   html+='<div class="alert alert-warn mb16"><i class="ti ti-alert-triangle"></i>'+t("assessment_seq")+'</div>';
   html+='<div class="g2">';
-  // Card 1
+
+  // Card identificação
   html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i>'+t("identification")+'</div>';
-  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="av-atl">'+atlOps+'</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="av-atl" onchange="calcComposicao()">'+atlOps+'</select></div>';
   html+='<div class="form-group"><label class="form-label">'+t("assessment_period")+'</label><select id="av-per">';
   html+='<option value="Sem. 0">'+t("sem0")+'</option><option value="Sem. 4">'+t("sem4")+'</option>';
   html+='<option value="Sem. 8">'+t("sem8")+'</option><option value="Sem. 12">'+t("sem12")+'</option>';
@@ -711,17 +817,44 @@ function rAvaliacao(){
   html+='<div class="form-group"><label class="form-label">'+t("assessment_date")+'</label><input type="date" id="av-dt" value="'+todayStr()+'"></div>';
   html+='<div class="form-group"><label class="form-label">'+t("obs_lbl")+'</label><textarea id="av-obs" placeholder="'+t("obs_ph")+'"></textarea></div>';
   html+='</div>';
-  // Card 2
-  html+='<div class="card"><div class="card-title"><i class="ti ti-ruler-measure"></i>'+t("body_data")+'</div><div class="g2i">';
-  html+='<div class="form-group"><label class="form-label">'+t("weight_col")+' (kg)</label><input type="number" step="0.1" id="av-peso" placeholder="73.5"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("fat_col")+'</label><input type="number" step="0.1" id="av-gord" placeholder="12.1"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("waist_cm")+'</label><input type="number" id="av-cin" placeholder="82"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("hip_cm")+'</label><input type="number" id="av-quad" placeholder="97"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("thigh_cm")+'</label><input type="number" id="av-coxa" placeholder="54"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("calf_cm")+'</label><input type="number" id="av-pant" placeholder="36"></div>';
-  html+='</div></div>';
-  // Card 3
-  html+='<div class="card"><div class="card-title"><i class="ti ti-run"></i>'+t("physical_tests")+'</div><div class="g2i">';
+
+  // Card dados corporais básicos
+  html+='<div class="card"><div class="card-title"><i class="ti ti-ruler-measure"></i>'+t("body_data")+'</div>';
+  html+='<div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">'+t("weight_col")+' (kg)</label><input type="number" step="0.1" id="av-peso" placeholder="75.0" oninput="calcComposicao()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("height_cm")+' (cm)</label><input type="number" id="av-alt" placeholder="178" oninput="calcComposicao()"></div>';
+  html+='</div>';
+
+  // Perímetros para % gordura
+  html+='<div style="margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em">'+t("perim_gordura")+'</div>';
+  html+='<div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">'+t("neck_cm")+' (cm)</label><input type="number" step="0.1" id="av-pescoco" placeholder="37.5" oninput="calcComposicao()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("waist_cm")+' (cm)</label><input type="number" step="0.1" id="av-cin" placeholder="82.0" oninput="calcComposicao()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("hip_cm")+' (cm) <small style="color:var(--text-3)">J&P</small></label><input type="number" step="0.1" id="av-quad" placeholder="97.0" oninput="calcComposicao()"></div>';
+  html+='</div>';
+
+  // Resultado composição
+  html+='<div id="composicao-result" style="margin-top:8px"></div>';
+  html+='</div>';
+
+  // Card assimetria bilateral
+  html+='<div class="card"><div class="card-title"><i class="ti ti-arrows-left-right"></i>'+t("bilateral_title")+'</div>';
+  html+='<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em">'+t("thigh_lbl")+' (cm)</div>';
+  html+='<div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">⬅ '+t("left")+'</label><input type="number" step="0.1" id="av-coxa-e" placeholder="52.0" oninput="calcAssimetria()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("right")+' ➡</label><input type="number" step="0.1" id="av-coxa-d" placeholder="53.0" oninput="calcAssimetria()"></div>';
+  html+='</div>';
+  html+='<div style="margin-bottom:10px;font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em">'+t("calf_lbl")+' (cm)</div>';
+  html+='<div class="g2i">';
+  html+='<div class="form-group"><label class="form-label">⬅ '+t("left")+'</label><input type="number" step="0.1" id="av-pant-e" placeholder="36.0" oninput="calcAssimetria()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("right")+' ➡</label><input type="number" step="0.1" id="av-pant-d" placeholder="37.0" oninput="calcAssimetria()"></div>';
+  html+='</div>';
+  html+='<div id="assimetria-result"></div>';
+  html+='</div>';
+
+  // Card testes físicos
+  html+='<div class="card"><div class="card-title"><i class="ti ti-run"></i>'+t("physical_tests")+'</div>';
+  html+='<div class="g2i">';
   html+='<div class="form-group"><label class="form-label">'+t("plank_s")+'</label><input type="number" id="av-pr" placeholder="95"></div>';
   html+='<div class="form-group"><label class="form-label">'+t("illinois_s")+'</label><input type="number" step="0.1" id="av-il" placeholder="15.8"></div>';
   html+='<div class="form-group"><label class="form-label">'+t("sprint10")+'</label><input type="number" step="0.01" id="av-s10" placeholder="1.88"></div>';
@@ -729,20 +862,24 @@ function rAvaliacao(){
   html+='<div class="form-group"><label class="form-label">'+t("broad_jump")+'</label><input type="number" id="av-sal" placeholder="205"></div>';
   html+='<div class="form-group"><label class="form-label">'+t("bip_m")+'</label><input type="number" id="av-bip" placeholder="1360"></div>';
   html+='</div></div>';
-  // Card 4
+
+  // Card referências
   html+='<div class="card" style="display:flex;flex-direction:column;gap:10px">';
   html+='<div class="card-title"><i class="ti ti-clipboard-check"></i>'+t("ref_table")+'</div>';
   html+='<table><thead><tr><th>'+t("test_col")+'</th><th>'+t("excellent")+'</th><th>'+t("good")+'</th><th>'+t("regular")+'</th></tr></thead><tbody>';
+  html+='<tr><td>% '+t("fat_col")+' ('+t("athletes")+')</td><td>&lt;10%</td><td>10-14%</td><td>15-20%</td></tr>';
   html+='<tr><td>BIP</td><td>&gt;1800m</td><td>1400-1800m</td><td>1000-1400m</td></tr>';
   html+='<tr><td>Sprint 10m</td><td>&lt;1,80s</td><td>1,80-1,99s</td><td>2,00-2,19s</td></tr>';
   html+='<tr><td>Sprint 30m</td><td>&lt;4,00s</td><td>4,00-4,30s</td><td>4,31-4,60s</td></tr>';
   html+='<tr><td>'+t("broad_jump")+'</td><td>&gt;220cm</td><td>200-220cm</td><td>180-199cm</td></tr>';
   html+='<tr><td>'+t("plank_s")+'</td><td>&gt;120s</td><td>90-120s</td><td>60-89s</td></tr>';
+  html+='<tr><td>'+t("asym_ref")+'</td><td>&lt;0,5cm</td><td>0,5-1cm</td><td>&gt;1cm ⚠</td></tr>';
   html+='</tbody></table>';
   html+='<button class="btn primary" style="margin-top:auto;justify-content:center" onclick="saveAv()"><i class="ti ti-device-floppy"></i>'+t("save_assessment")+'</button>';
   html+='</div>';
   html+='</div></div>';
-  // Evolution tab
+
+  // ── EVOLUTION TAB ───────────────────────────────────────────────
   html+='<div id="av-ev" class="hidden"><div class="g2 mb16">';
   html+='<div class="card"><div class="card-title"><i class="ti ti-run"></i>'+t("bip_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-bip" role="img" aria-label="bip">.</canvas></div></div>';
   html+='<div class="card"><div class="card-title"><i class="ti ti-bolt"></i>'+t("s10_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-s10" role="img" aria-label="s10">.</canvas></div></div>';
@@ -751,29 +888,79 @@ function rAvaliacao(){
   html+='<div class="card"><div class="card-title"><i class="ti ti-body-scan"></i>'+t("plank_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-pr" role="img" aria-label="plank">.</canvas></div></div>';
   html+='<div class="card"><div class="card-title"><i class="ti ti-percentage"></i>'+t("fat_chart")+'</div><div style="position:relative;height:220px"><canvas id="ch-gd" role="img" aria-label="fat">.</canvas></div></div>';
   html+='</div></div>';
+
+  // ── ASYMMETRY TAB ───────────────────────────────────────────────
+  html+='<div id="av-asym" class="hidden">';
+  html+='<div class="form-group" style="max-width:300px;margin-bottom:20px">';
+  html+='<label class="form-label">'+t("ll_atleta")+'</label>';
+  html+='<select id="asym-atl" onchange="renderAssymPanel()">'+atlOps+'</select></div>';
+  html+='<div id="asym-panel"></div>';
+  html+='</div>';
+
   return html;
 }
+
 function swAv(tab){
   _aTab=tab;
   document.getElementById("tab-form").classList.toggle("active",tab==="form");
   document.getElementById("tab-ev").classList.toggle("active",tab==="ev");
+  document.getElementById("tab-asym").classList.toggle("active",tab==="asym");
   document.getElementById("av-form").classList.toggle("hidden",tab!=="form");
   document.getElementById("av-ev").classList.toggle("hidden",tab!=="ev");
-  if(tab==="ev")bldAvCharts();
+  document.getElementById("av-asym").classList.toggle("hidden",tab!=="asym");
+  if(tab==="ev") bldAvCharts();
+  if(tab==="asym") renderAssymPanel();
 }
 function saveAv(){
   var aid=document.getElementById("av-atl").value;
   if(!aid){alert(t("select_athlete"));return;}
-  if(!DB.avaliacoes[aid])DB.avaliacoes[aid]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],peso:[]};
+  if(!DB.avaliacoes[aid])DB.avaliacoes[aid]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],gordJP:[],peso:[],massaMagra:[],massaGorda:[],coxaE:[],coxaD:[],pantE:[],pantD:[]};
   var av=DB.avaliacoes[aid];
   av.bip.push(parseInt(document.getElementById("av-bip").value)||0);
   av.s10.push(parseFloat(document.getElementById("av-s10").value)||0);
   av.s30.push(parseFloat(document.getElementById("av-s30").value)||0);
   av.salto.push(parseInt(document.getElementById("av-sal").value)||0);
   av.prancha.push(parseInt(document.getElementById("av-pr").value)||0);
-  av.gord.push(parseFloat(document.getElementById("av-gord").value)||0);
   av.peso.push(parseFloat(document.getElementById("av-peso").value)||0);
-  saveDB();alert(t("assessment_saved"));
+  // Composição corporal
+  var comp = window._lastComposicao||{};
+  av.gord.push(comp.gordNavy||0);
+  av.gordJP.push(comp.gordJP||0);
+  av.massaMagra.push(comp.massaMagra||0);
+  av.massaGorda.push(comp.massaGorda||0);
+  // Assimetria
+  var asym = window._lastAssimetria||{};
+  av.coxaE.push(asym.coxaE||0);
+  av.coxaD.push(asym.coxaD||0);
+  av.pantE.push(asym.pantE||0);
+  av.pantD.push(asym.pantD||0);
+  saveDB();
+  // Sync to Google Sheets if configured
+  if(SHEETS_URL){
+    var atl = DB.atletas.find(function(x){return x.id===aid;});
+    var av2 = DB.avaliacoes[aid];
+    var last = function(arr){ return arr&&arr.length?arr[arr.length-1]:0; };
+    var comp = window._lastComposicao||{};
+    var asym = window._lastAssimetria||{};
+    var params = "acao=save_avaliacao"
+      +"&atleta_id="+encodeURIComponent(aid)
+      +"&atleta_nome="+encodeURIComponent(atl?atl.nome:"")
+      +"&periodo="+encodeURIComponent(document.getElementById("av-per").value||"")
+      +"&peso="+encodeURIComponent(document.getElementById("av-peso").value||0)
+      +"&gord="+(comp.gordNavy||0)
+      +"&gordJP="+(comp.gordJP||0)
+      +"&magra="+(comp.massaMagra||0)
+      +"&gorda="+(comp.massaGorda||0)
+      +"&coxaE="+(asym.coxaE||0)+"&coxaD="+(asym.coxaD||0)
+      +"&pantE="+(asym.pantE||0)+"&pantD="+(asym.pantD||0)
+      +"&prancha="+(parseInt(document.getElementById("av-pr").value)||0)
+      +"&s10="+(parseFloat(document.getElementById("av-s10").value)||0)
+      +"&s30="+(parseFloat(document.getElementById("av-s30").value)||0)
+      +"&salto="+(parseInt(document.getElementById("av-sal").value)||0)
+      +"&bip="+(parseInt(document.getElementById("av-bip").value)||0);
+    fetch(SHEETS_URL+"?"+params,{method:"GET",mode:"no-cors"}).catch(function(){});
+  }
+  alert(t("assessment_saved"));
 }
 function bldAvCharts(){
   var keys=Object.keys(DB.avaliacoes);
@@ -812,7 +999,8 @@ function rWellbeing(){
   var v=igpV(_wb);var cfg=wbKeys();
   var atlOps=DB.atletas.map(function(a){return '<option value="'+a.id+'">'+a.nome+'</option>';}).join("");
   var html='<div class="g2">';
-  html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i>'+t("wb_register")+'</div>';
+  var sheetsNote = SHEETS_URL ? '<span style="font-size:10px;font-weight:400;color:var(--green-700);margin-left:6px;background:var(--green-50);padding:2px 8px;border-radius:10px">&#x1F517; Google Sheets</span>' : '';
+  html+='<div class="card"><div class="card-title"><i class="ti ti-user"></i>'+t("wb_register")+sheetsNote+'</div>';
   html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="wb-sel" onchange="chWb(this.value)">'+atlOps+'</select></div>';
   html+='<div class="form-group"><label class="form-label">'+todayStr()+'</label><input type="date" value="'+todayStr()+'"></div>';
   html+='<div class="form-group"><label class="form-label">'+t("sleep_hours")+'</label><input type="number" step="0.5" id="wb-hrs" placeholder="7.5" min="0" max="14"></div>';
@@ -927,7 +1115,7 @@ function rCarga(){
   sess.forEach(function(s,i){
     var u2=cgs[i];var pct=Math.round(u2/tot*100);
     var rpeCls=s.rpe>=8?"badge-red":s.rpe>=6?"badge-yellow":"badge-green";
-    html+='<tr><td><strong>'+s.dia+'</strong></td><td>'+sessT(s.tipo)+'</td><td>'+s.dur+' min</td>';
+    html+='<tr><td><strong>'+diaTxt(s.dia)+'</strong></td><td>'+sessT(s.tipo)+'</td><td>'+s.dur+' min</td>';
     html+='<td><span class="badge '+rpeCls+'">'+s.rpe+'/10</span></td>';
     html+='<td><strong>'+u2+'</strong></td>';
     html+='<td style="width:180px"><div style="display:flex;align-items:center;gap:8px"><span style="min-width:34px;font-size:12px">'+pct+'%</span>';
@@ -964,7 +1152,12 @@ function rPresenca(){
   var html='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>'+t("pres_legend")+'</div>';
   html+='<div class="card"><div class="table-wrap"><table>';
   html+='<thead><tr><th style="min-width:160px">'+t("nm_atletas")+'</th>';
-  DB.treinoDatas.forEach(function(d){html+='<th class="pres-cell" style="font-size:10px">'+d+'</th>';});
+  DB.treinoDatas.forEach(function(iso){
+    var dd=new Date(iso+"T12:00:00");
+    var dayAbbr=dd.toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{weekday:"short"});
+    var dayDate=dd.toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{day:"2-digit",month:"2-digit"});
+    html+='<th class="pres-cell" style="font-size:10px">'+dayAbbr+" "+dayDate+'</th>';
+  });
   html+='<th style="min-width:90px">'+t("attendance_col")+'</th></tr></thead><tbody>';
   DB.atletas.forEach(function(a){
     var arr=DB.presenca[a.id]||[];var pct=ppct(arr);
@@ -1105,12 +1298,171 @@ function genRel(){
   html+='<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px"><i class="ti ti-notes" style="font-size:14px;vertical-align:-2px"></i> '+t("rec_lbl")+'</div>';
   html+='<div style="font-size:13px;color:var(--text-1);line-height:1.6">'+rc+'</div></div>';
   html+='<div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--text-3)">';
-  html+='<span>FutPerformance &middot; '+t("brand")+'</span>';
+  html+='<span>SKBrederis 1B &middot; '+t("brand")+'</span>';
   html+='<span>Ref.: A. C. Gomes &middot; J. P. Medina &middot; J. A. Rodrigues &middot; Foster RPE</span></div></div>';
   document.getElementById("rel-out").innerHTML=html;
 }
 function printRel(){if(!document.getElementById("rel-print")){alert(t("gen_first"));return;}window.print();}
 
+
+
+// ═══ Composição Corporal ══════════════════════════════════════════
+function calcComposicao(){
+  var peso   = parseFloat(document.getElementById("av-peso")&&document.getElementById("av-peso").value)||0;
+  var alt    = parseFloat(document.getElementById("av-alt")&&document.getElementById("av-alt").value)||0;
+  var pescoco= parseFloat(document.getElementById("av-pescoco")&&document.getElementById("av-pescoco").value)||0;
+  var cin    = parseFloat(document.getElementById("av-cin")&&document.getElementById("av-cin").value)||0;
+  var quad   = parseFloat(document.getElementById("av-quad")&&document.getElementById("av-quad").value)||0;
+  var el     = document.getElementById("composicao-result");
+  if(!el) return;
+  if(!peso||!alt||!pescoco||!cin){ el.innerHTML=''; return; }
+
+  // Método Marinha Americana (homens): % = 495/(1.0324 - 0.19077*log10(cin-pescoco) + 0.15456*log10(alt)) - 450
+  var gordNavy = 0, gordJP = 0, valid = true;
+  try {
+    var logA = Math.log10(cin - pescoco);
+    var logH = Math.log10(alt);
+    gordNavy = 495/(1.0324 - 0.19077*logA + 0.15456*logH) - 450;
+    gordNavy = Math.round(gordNavy*10)/10;
+  } catch(e){ valid=false; }
+
+  // Jackson & Pollock perímetros (homens): % = 0.31457*(cin) - 0.10969*(peso) + 10.8336
+  if(quad){
+    gordJP = 0.31457*cin - 0.10969*peso + 10.8336;
+    gordJP = Math.round(gordJP*10)/10;
+  }
+
+  if(!valid||gordNavy<0||gordNavy>50){ el.innerHTML=''; return; }
+
+  var massaGorda  = Math.round(peso*(gordNavy/100)*10)/10;
+  var massaMagra  = Math.round((peso - massaGorda)*10)/10;
+  // Gordura excedente: baseado em ref 10% para futebol
+  var gordIdeal   = peso*0.10;
+  var excedente   = Math.round((massaGorda - gordIdeal)*10)/10;
+  var excClass    = excedente>0?"metric-down":"metric-up";
+  var gordClass   = gordNavy<10?"badge-green":gordNavy<15?"badge-yellow":"badge-red";
+
+  var html = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-top:8px">';
+  html += '<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em">'+t("comp_summary")+'</div>';
+  html += '<div class="g2i">';
+  html += '<div><div style="font-size:11px;color:var(--text-3)">'+t("fat_navy")+'</div><div style="font-size:22px;font-weight:700"><span class="badge '+gordClass+'">'+gordNavy+'%</span></div></div>';
+  if(gordJP){
+    var gordJPClass = gordJP<10?"badge-green":gordJP<15?"badge-yellow":"badge-red";
+    html += '<div><div style="font-size:11px;color:var(--text-3)">'+t("fat_jp")+'</div><div style="font-size:22px;font-weight:700"><span class="badge '+gordJPClass+'">'+gordJP+'%</span></div></div>';
+  }
+  html += '<div><div style="font-size:11px;color:var(--text-3)">'+t("lean_mass")+'</div><div style="font-size:18px;font-weight:600;color:var(--green-700)">'+massaMagra+' kg</div></div>';
+  html += '<div><div style="font-size:11px;color:var(--text-3)">'+t("fat_mass")+'</div><div style="font-size:18px;font-weight:600">'+massaGorda+' kg</div></div>';
+  html += '<div><div style="font-size:11px;color:var(--text-3)">'+t("excess_fat")+'</div><div style="font-size:18px;font-weight:600" class="'+excClass+'">'+(excedente>0?'+':'')+excedente+' kg</div></div>';
+  html += '</div>';
+  html += '<div style="font-size:11px;color:var(--text-3);margin-top:8px">'+t("ideal_fat_range")+'</div>';
+  html += '</div>';
+  el.innerHTML = html;
+
+  // Store for saving
+  window._lastComposicao = {gordNavy:gordNavy, gordJP:gordJP, massaMagra:massaMagra, massaGorda:massaGorda, excedente:excedente};
+}
+
+// ═══ Assimetria bilateral ═════════════════════════════════════════
+function calcAssimetria(){
+  var coxaE  = parseFloat(document.getElementById("av-coxa-e")&&document.getElementById("av-coxa-e").value)||0;
+  var coxaD  = parseFloat(document.getElementById("av-coxa-d")&&document.getElementById("av-coxa-d").value)||0;
+  var pantE  = parseFloat(document.getElementById("av-pant-e")&&document.getElementById("av-pant-e").value)||0;
+  var pantD  = parseFloat(document.getElementById("av-pant-d")&&document.getElementById("av-pant-d").value)||0;
+  var el     = document.getElementById("assimetria-result");
+  if(!el) return;
+  if((!coxaE&&!coxaD)&&(!pantE&&!pantD)){ el.innerHTML=''; return; }
+
+  function asymRow(nameKey, esq, dir){
+    if(!esq||!dir) return '';
+    var diff    = Math.abs(esq-dir);
+    var diffPct = Math.round(diff/Math.max(esq,dir)*100*10)/10;
+    var cls     = diff<0.5?"badge-green":diff<1?"badge-yellow":"badge-red";
+    var alertMsg= diff<0.5?t("asym_ok"):diff<1?t("asym_warn"):t("asym_alert");
+    var alertCls= diff<0.5?"alert-ok":diff<1?"alert-warn":"alert-err";
+    var ico     = diff<0.5?"ti-check":diff<1?"ti-alert-triangle":"ti-alert-circle";
+    var r='<div style="margin-bottom:14px">';
+    r+='<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">'+t(nameKey)+'</div>';
+    r+='<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:8px">';
+    r+='<div style="text-align:center;padding:10px;background:var(--blue-50);border-radius:8px"><div style="font-size:11px;color:var(--blue-700);font-weight:600">⬅ '+t("left")+'</div><div style="font-size:22px;font-weight:700;color:var(--blue-700)">'+esq+' cm</div></div>';
+    r+='<div style="text-align:center"><span class="badge '+cls+'">'+diff.toFixed(1)+' cm<br>'+diffPct+'%</span></div>';
+    r+='<div style="text-align:center;padding:10px;background:var(--green-50);border-radius:8px"><div style="font-size:11px;color:var(--green-700);font-weight:600">'+t("right")+' ➡</div><div style="font-size:22px;font-weight:700;color:var(--green-700)">'+dir+' cm</div></div>';
+    r+='</div>';
+    r+='<div class="alert '+alertCls+'"><i class="ti '+ico+'"></i>'+alertMsg+' ('+diff.toFixed(1)+' cm / '+diffPct+'%)</div>';
+    r+='</div>';
+    return r;
+  }
+
+  var html = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-top:8px">';
+  html += '<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em">'+t("bilateral_title")+'</div>';
+  html += asymRow("thigh_lbl", coxaE, coxaD);
+  html += asymRow("calf_lbl", pantE, pantD);
+  html += '</div>';
+  el.innerHTML = html;
+
+  window._lastAssimetria = {coxaE:coxaE, coxaD:coxaD, pantE:pantE, pantD:pantD};
+}
+
+// ═══ Painel assimetria histórica ══════════════════════════════════
+function renderAssymPanel(){
+  var id  = document.getElementById("asym-atl") ? document.getElementById("asym-atl").value : null;
+  var el  = document.getElementById("asym-panel");
+  if(!el||!id) return;
+  var av  = DB.avaliacoes[id];
+  var atl = DB.atletas.find(function(a){return a.id===id;});
+  if(!av||!av.coxaE||!av.coxaE.length){
+    el.innerHTML='<div class="alert alert-info"><i class="ti ti-info-circle"></i>'+t("no_asym_data")+'</div>';
+    return;
+  }
+
+  var labels = sems().slice(0, av.coxaE.length);
+  var html = '<div class="g2">';
+
+  // Coxa chart
+  html += '<div class="card"><div class="card-title"><i class="ti ti-arrows-left-right"></i>'+t("thigh_lbl")+'</div>';
+  html += '<div style="position:relative;height:220px"><canvas id="ch-coxa-asym" role="img" aria-label="coxa">.</canvas></div>';
+  // Diff table
+  html += '<table style="margin-top:12px"><thead><tr><th>'+t("assessment_period")+'</th><th>⬅ '+t("left")+'</th><th>'+t("right")+' ➡</th><th>'+t("diff_cm")+'</th><th>'+t("diff_pct")+'</th></tr></thead><tbody>';
+  for(var i=0;i<av.coxaE.length;i++){
+    var diff=Math.abs(av.coxaE[i]-av.coxaD[i]);
+    var pct=Math.round(diff/Math.max(av.coxaE[i],av.coxaD[i])*100*10)/10;
+    var cls=diff<0.5?"badge-green":diff<1?"badge-yellow":"badge-red";
+    html+='<tr><td>'+labels[i]+'</td><td>'+av.coxaE[i]+'</td><td>'+av.coxaD[i]+'</td>';
+    html+='<td><span class="badge '+cls+'">'+diff.toFixed(1)+' cm</span></td><td>'+pct+'%</td></tr>';
+  }
+  html += '</tbody></table></div>';
+
+  // Panturrilha chart
+  if(av.pantE&&av.pantE.length){
+    html += '<div class="card"><div class="card-title"><i class="ti ti-arrows-left-right"></i>'+t("calf_lbl")+'</div>';
+    html += '<div style="position:relative;height:220px"><canvas id="ch-pant-asym" role="img" aria-label="pant">.</canvas></div>';
+    html += '<table style="margin-top:12px"><thead><tr><th>'+t("assessment_period")+'</th><th>⬅ '+t("left")+'</th><th>'+t("right")+' ➡</th><th>'+t("diff_cm")+'</th><th>'+t("diff_pct")+'</th></tr></thead><tbody>';
+    for(var j=0;j<av.pantE.length;j++){
+      var diffP=Math.abs(av.pantE[j]-av.pantD[j]);
+      var pctP=Math.round(diffP/Math.max(av.pantE[j],av.pantD[j])*100*10)/10;
+      var clsP=diffP<0.5?"badge-green":diffP<1?"badge-yellow":"badge-red";
+      html+='<tr><td>'+labels[j]+'</td><td>'+av.pantE[j]+'</td><td>'+av.pantD[j]+'</td>';
+      html+='<td><span class="badge '+clsP+'">'+diffP.toFixed(1)+' cm</span></td><td>'+pctP+'%</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+
+  setTimeout(function(){
+    mkChart("ch-coxa-asym",{type:"bar",data:{labels:labels,datasets:[
+      {label:"⬅ "+t("left"),data:av.coxaE,backgroundColor:"rgba(21,101,192,.7)",borderRadius:4},
+      {label:t("right")+" ➡",data:av.coxaD,backgroundColor:"rgba(46,125,50,.7)",borderRadius:4}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{boxWidth:10,font:{size:11}}}},scales:{y:{beginAtZero:false}}}});
+
+    if(av.pantE&&av.pantE.length){
+      mkChart("ch-pant-asym",{type:"bar",data:{labels:labels,datasets:[
+        {label:"⬅ "+t("left"),data:av.pantE,backgroundColor:"rgba(21,101,192,.7)",borderRadius:4},
+        {label:t("right")+" ➡",data:av.pantD,backgroundColor:"rgba(46,125,50,.7)",borderRadius:4}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{boxWidth:10,font:{size:11}}}},scales:{y:{beginAtZero:false}}}});
+    }
+  },50);
+}
 
 // ═══ afterRender ══════════════════════════════════════════════════
 function afterRender(pg){
@@ -1119,7 +1471,7 @@ function afterRender(pg){
     var cgs=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
     setTimeout(function(){
       mkChart("ch-c-d",{type:"bar",data:{
-        labels:DB.cargaSemana.map(function(s){return s.dia;}),
+        labels:DB.cargaSemana.map(function(s){return diaTxt(s.dia);}),
         datasets:[{label:u,data:cgs,backgroundColor:["#2e7d32","#1565c0","#6a1b9a","#e65100"],borderRadius:5}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"rgba(0,0,0,.05)"}}}}});
       var bk=Object.keys(DB.avaliacoes);
@@ -1140,7 +1492,7 @@ function afterRender(pg){
     var cgs2=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
     setTimeout(function(){
       mkChart("ch-cw",{type:"bar",data:{
-        labels:DB.cargaSemana.map(function(s){return s.dia;}),
+        labels:DB.cargaSemana.map(function(s){return diaTxt(s.dia);}),
         datasets:[{label:u,data:cgs2,
           backgroundColor:cgs2.map(function(c){return c>600?"#e53935":c>350?"#ffa726":"#43a047";}),
           borderRadius:5}]
@@ -1150,8 +1502,16 @@ function afterRender(pg){
 }
 
 // ═══ Init ══════════════════════════════════════════════════════════
-document.getElementById("content").innerHTML = rDashboard();
-afterRender("dashboard");
+// On load, fetch Sheets data then render
+if(SHEETS_URL){
+  fetchWellbeingFromSheets(function(){
+    document.getElementById("content").innerHTML = rDashboard();
+    afterRender("dashboard");
+  });
+} else {
+  document.getElementById("content").innerHTML = rDashboard();
+  afterRender("dashboard");
+}
 
 </script>
 </body>
