@@ -726,7 +726,9 @@ document.querySelectorAll(".nav-item[data-page]").forEach(function(el){
       afterRender(pg);
       if(pg==="avaliacao") attachSaveBtn();
     }
-    if(SHEETS_URL && (pg==="dashboard"||pg==="wellbeing")){
+    if(SHEETS_URL && pg==="dashboard"){
+      fetchWellbeingFromSheets(function(){ fetchRPEFromSheets(finish); });
+    } else if(SHEETS_URL && pg==="wellbeing"){
       fetchWellbeingFromSheets(finish);
     } else if(SHEETS_URL && pg==="presenca"){
       fetchPresencaFromSheets(finish);
@@ -752,7 +754,7 @@ function rDashboard(){
   var avgI=DB.atletas.length?Math.round(DB.atletas.reduce(function(s,a){return s+igpV(DB.wellbeing[a.id]);},0)/DB.atletas.length):0;
   var avgP=DB.atletas.length?Math.round(DB.atletas.reduce(function(s,a){return s+ppct(DB.presenca[a.id]);},0)/DB.atletas.length):0;
   var u=ua();
-  var cgs=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+  var cgs=DB.cargaSemana.map(function(s){return effectiveRPE(s)*s.dur;});
   var tot=cgs.reduce(function(a,b){return a+b;},0);
   var html="";
   html+='<div class="g4 mb20">';
@@ -1134,9 +1136,17 @@ function saveWb(){
 
 
 // ═══ Carga ════════════════════════════════════════════════════════
+function effectiveRPE(s){
+  // Retorna o RPE efetivo: media dos atletas se disponivel, senao o RPE manual do treinador
+  if(s.data && _atletaRPEs[s.data] && _atletaRPEs[s.data].avg){
+    return _atletaRPEs[s.data].avg;
+  }
+  return s.rpe||0;
+}
+
 function rCarga(){
   var sess=DB.cargaSemana;
-  var cgs=sess.map(function(s){return s.rpe*s.dur;});
+  var cgs=sess.map(function(s){return effectiveRPE(s)*s.dur;});
   var tot=cgs.reduce(function(a,b){return a+b;},0);
   var med=Math.round(tot/cgs.length);
   var dp=Math.round(Math.sqrt(cgs.reduce(function(s,c){return s+(c-med)*(c-med);},0)/cgs.length));
@@ -1151,6 +1161,7 @@ function rCarga(){
   html+='<div class="metric-card"><div class="metric-label">'+t("monotony_lbl")+'</div><div class="metric-value" style="color:'+(mH?"var(--red-700)":"var(--green-700)")+'">'+mono+'</div><div class="metric-sub">'+(mH?t("vary_loads"):t("ideal_range"))+'</div></div>';
   html+='<div class="metric-card"><div class="metric-label">'+t("strain_fat")+'</div><div class="metric-value">'+strain+'</div><div class="metric-sub"><span class="badge '+sC+'">'+(strain>6000?t("strain_high"):strain>3000?t("strain_mod"):t("strain_ok"))+'</span></div></div>';
   html+='</div>';
+  html+='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>O calculo de carga usa automaticamente o RPE medio dos atletas quando disponivel. Caso ainda nao haja respostas, usa o RPE provisorio inserido pelo treinador.</div>';
   if(mH)html+='<div class="alert alert-warn mb16"><i class="ti ti-alert-triangle"></i>'+t("mono_alert").replace("{v}",mono)+'</div>';
   if(strain>6000)html+='<div class="alert alert-err mb16"><i class="ti ti-x"></i>'+t("strain_alert").replace("{v}",strain)+'</div>';
   var rpeColors=["#a5d6a7","#c8e6c9","#fff176","#ffcc02","#ffa726","#ff7043","#ef5350","#e53935","#c62828","#b71c1c"];
@@ -1168,7 +1179,7 @@ function rCarga(){
   html+='<option value="Avaliacao">'+t("sa")+'</option>';
   html+='</select></div>';
   html+='<div class="form-group"><label class="form-label">'+t("dur_min")+'</label><input type="number" id="nc-dur" placeholder="90" oninput="liveCarga()"></div>';
-  html+='<div class="form-group"><label class="form-label">'+t("rpe_avg")+'</label><input type="number" id="nc-rpe" min="0" max="10" step="1" placeholder="6" oninput="liveCarga()"></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("rpe_avg")+' <small style="font-weight:400;color:var(--text-3)">(provisorio)</small></label><input type="number" id="nc-rpe" min="0" max="10" step="1" placeholder="6" oninput="liveCarga()"></div>';
   html+='</div>';
   html+='<div class="carga-calc" id="carga-live">'+t("load_fill")+'</div>';
   html+='<div style="margin-top:10px;font-size:12px;color:var(--text-3)">'+t("rpe_hint")+'</div>';
@@ -1183,13 +1194,14 @@ function rCarga(){
   html+='<thead><tr><th>'+t("day_col")+'</th><th>'+t("type_col")+'</th><th>'+t("dur_col")+'</th><th>RPE</th><th>'+t("load_ua")+'</th><th>'+t("pct_week")+'</th></tr></thead><tbody>';
   sess.forEach(function(s,i){
     var u2=cgs[i];var pct=Math.round(u2/tot*100);
-    var rpeCls=s.rpe>=8?"badge-red":s.rpe>=6?"badge-yellow":"badge-green";
-    var atlRpeTag="";
-    if(s.data && _atletaRPEs[s.data]){
-      atlRpeTag=' <span style="font-size:10px;color:var(--b7)" title="'+_atletaRPEs[s.data].count+' atletas">&#128100; '+_atletaRPEs[s.data].avg+'</span>';
-    }
+    var eRpe=effectiveRPE(s);
+    var fromAthletes = s.data && _atletaRPEs[s.data] && _atletaRPEs[s.data].avg;
+    var rpeCls=eRpe>=8?"badge-red":eRpe>=6?"badge-yellow":"badge-green";
+    var rpeTag = fromAthletes
+      ? '<span class="badge '+rpeCls+'">'+eRpe+'/10</span> <span style="font-size:10px;color:var(--green-700)" title="'+_atletaRPEs[s.data].count+' respostas dos atletas">&#128100; real</span>'
+      : '<span class="badge '+rpeCls+'">'+eRpe+'/10</span> <span style="font-size:10px;color:var(--text-3)" title="Aguardando respostas dos atletas">&#9201; provisorio</span>';
     html+='<tr><td><strong>'+diaTxt(s.dia)+'</strong></td><td>'+sessT(s.tipo)+'</td><td>'+s.dur+' min</td>';
-    html+='<td><span class="badge '+rpeCls+'">'+s.rpe+'/10</span>'+atlRpeTag+'</td>';
+    html+='<td>'+rpeTag+'</td>';
     html+='<td><strong>'+u2+'</strong></td>';
     html+='<td style="width:180px"><div style="display:flex;align-items:center;gap:8px"><span style="min-width:34px;font-size:12px">'+pct+'%</span>';
     html+='<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%"></div></div></div></td>';
@@ -1565,7 +1577,7 @@ function renderAssymPanel(){
 function afterRender(pg){
   var u=ua();
   if(pg==="dashboard"){
-    var cgs=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+    var cgs=DB.cargaSemana.map(function(s){return effectiveRPE(s)*s.dur;});
     setTimeout(function(){
       mkChart("ch-c-d",{type:"bar",data:{
         labels:DB.cargaSemana.map(function(s){return diaTxt(s.dia);}),
@@ -1586,7 +1598,7 @@ function afterRender(pg){
     },50);
   }
   if(pg==="carga"){
-    var cgs2=DB.cargaSemana.map(function(s){return s.rpe*s.dur;});
+    var cgs2=DB.cargaSemana.map(function(s){return effectiveRPE(s)*s.dur;});
     setTimeout(function(){
       mkChart("ch-cw",{type:"bar",data:{
         labels:DB.cargaSemana.map(function(s){return diaTxt(s.dia);}),
@@ -1602,8 +1614,10 @@ function afterRender(pg){
 // On load, fetch Sheets data then render
 if(SHEETS_URL){
   fetchWellbeingFromSheets(function(){
-    document.getElementById("content").innerHTML = rDashboard();
-    afterRender("dashboard");
+    fetchRPEFromSheets(function(){
+      document.getElementById("content").innerHTML = rDashboard();
+      afterRender("dashboard");
+    });
   });
 } else {
   document.getElementById("content").innerHTML = rDashboard();
