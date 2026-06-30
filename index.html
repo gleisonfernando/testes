@@ -676,7 +676,7 @@ function setLang(lang) {
 // ═══ DB ═══════════════════════════════════════════════════════════
 var DB = {
   atletas:[
-    {id:"ATL001",nome:"Gleison Fernando Abati",pos:"MEI",nasc:"1982-07-09",peso:0,altura:0,gord:0,pe:"Direito",tel:"",status:"Ativo"}
+    {id:"ATL001",nome:"Gleison Fernando Abati",pos:"MEI",nasc:"1982-07-09",peso:0,altura:0,gord:0,pe:"Direito",tel:"",status:"Ativo",pin:"0907"}
   ],
   wellbeing:{},
   avaliacoes:{},
@@ -804,7 +804,7 @@ function rAtletas(){
   var html='<div style="display:flex;justify-content:flex-end;margin-bottom:16px">';
   html+='<button class="btn primary" onclick="document.getElementById(\'modal-atleta\').classList.remove(\'hidden\')"><i class="ti ti-user-plus"></i>'+t("new_athlete")+'</button></div>';
   html+='<div class="card"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>'+t("nm_atletas")+'</th><th>'+t("pos_col")+'</th><th>'+t("age_col")+'</th><th>'+t("weight_col")+'</th><th>'+t("fat_col")+'</th><th>'+t("attendance_col")+'</th><th>'+t("igp_col")+'</th><th>'+t("status_col")+'</th><th>'+t("contact_col")+'</th><th></th></tr></thead>';
+  html+='<thead><tr><th>'+t("nm_atletas")+'</th><th>'+t("pos_col")+'</th><th>'+t("age_col")+'</th><th>'+t("weight_col")+'</th><th>'+t("fat_col")+'</th><th>'+t("attendance_col")+'</th><th>'+t("igp_col")+'</th><th>'+t("status_col")+'</th><th>PIN</th><th>'+t("contact_col")+'</th><th></th></tr></thead>';
   html+='<tbody>';
   DB.atletas.forEach(function(a){
     var pp=ppct(DB.presenca[a.id]);
@@ -819,6 +819,7 @@ function rAtletas(){
     html+='<td><div style="font-weight:500">'+pp+'%</div><div class="prog-bar" style="width:80px"><div class="prog-fill" style="width:'+pp+'%;background:'+pBar+'"></div></div></td>';
     html+='<td><span class="badge '+igpC(v)+'">'+v+'</span></td>';
     html+='<td><span class="badge '+stCls(a.status)+'">'+stTxt(a.status)+'</span></td>';
+    html+='<td><span class="badge badge-gray" style="font-family:monospace;letter-spacing:.1em">'+(a.pin||"----")+'</span></td>';
     html+='<td style="font-size:12px;color:var(--text-2)">'+(a.tel||"--")+'</td>';
     html+='<td><button class="btn danger" style="padding:5px 9px;font-size:12px" onclick="openDel(\''+a.id+'\')" title="'+t("delete_athlete")+'"><i class="ti ti-trash" style="font-size:14px"></i></button></td>';
     html+='</tr>';
@@ -843,22 +844,40 @@ function confirmDelete(){
   saveDB();closeDeleteModal();destroyCharts();
   document.getElementById("content").innerHTML=rAtletas();
 }
+function gerarPinNascimento(dataNasc){
+  if(!dataNasc) return "0000";
+  var partes=dataNasc.split("-"); // formato YYYY-MM-DD
+  if(partes.length!==3) return "0000";
+  var mes=partes[1], dia=partes[2];
+  return dia+mes; // DDMM
+}
+
 function saveAtleta(){
   var nome=document.getElementById("m-nome").value.trim();
   if(!nome){alert(t("ml_nome")+"?");return;}
+  var nasc=document.getElementById("m-nasc").value;
+  if(!nasc){alert((LANG==="de"?"Geburtsdatum ist erforderlich (für PIN).":"Data de nascimento é obrigatória (para gerar o PIN).") );return;}
+  var pin=gerarPinNascimento(nasc);
   var a={id:"ATL"+String(DB.nextId++).padStart(3,"0"),nome:nome,
     pos:document.getElementById("m-pos").value,
-    nasc:document.getElementById("m-nasc").value,
+    nasc:nasc,
     peso:parseFloat(document.getElementById("m-peso").value)||0,
     altura:parseInt(document.getElementById("m-alt").value)||0,
     gord:parseFloat(document.getElementById("m-gord").value)||0,
     pe:document.getElementById("m-pe").value,
-    tel:document.getElementById("m-tel").value,status:"Ativo"};
+    tel:document.getElementById("m-tel").value,status:"Ativo",
+    pin:pin};
   DB.atletas.push(a);
   DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
   DB.presenca[a.id]=[];
   saveDB();closeAtletaModal();destroyCharts();
   document.getElementById("content").innerHTML=rAtletas();
+  alert((LANG==="de"?"Spieler hinzugefügt!":"Atleta adicionado!")+"\\n\\n"
+    +(LANG==="de"?"Zugangsdaten für die App:":"Dados de acesso para o app:")+"\\n"
+    +"ID: "+a.id+"\\n"
+    +(LANG==="de"?"Name":"Nome")+": "+a.nome+"\\n"
+    +"PIN: "+pin+"\\n\\n"
+    +(LANG==="de"?"Bitte fügen Sie diesen Spieler manuell zur ATLETAS-Liste in wellbeing_atleta.html hinzu.":"Adicione manualmente este atleta na lista ATLETAS do ficheiro wellbeing_atleta.html."));
 }
 function closeAtletaModal(){document.getElementById("modal-atleta").classList.add("hidden");}
 
