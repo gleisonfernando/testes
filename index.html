@@ -257,9 +257,56 @@ textarea{min-height:80px;resize:vertical}
 <script>
 
 
-// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
+// ═══ RPE dos atletas (pós-treino, simplificado) ═══════════════════
+var _atletaRPEs = {}; // {data: {avg, count, values:[]}}
+function fetchRPEFromSheets(callback){
+  if(!SHEETS_URL){if(callback)callback();return;}
+  var today=new Date().toISOString().slice(0,10);
+  var url=SHEETS_URL+"?acao=get_rpe_week&data="+today;
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(res){
+      _atletaRPEs={};
+      if(res.status==="ok"&&res.rpe&&res.rpe.length){
+        res.rpe.forEach(function(r){
+          var d=r.data;
+          if(!_atletaRPEs[d]) _atletaRPEs[d]={values:[],count:0};
+          _atletaRPEs[d].values.push(Number(r.rpe));
+          _atletaRPEs[d].count++;
+        });
+        Object.keys(_atletaRPEs).forEach(function(d){
+          var vs=_atletaRPEs[d].values;
+          _atletaRPEs[d].avg=Math.round(vs.reduce(function(a,b){return a+b;},0)/vs.length*10)/10;
+        });
+      }
+      if(callback)callback();
+    })
+    .catch(function(){if(callback)callback();});
+}
+
+// ═══ Presença confirmada pelos atletas ════════════════════════════
+var _atletaPresencas = {}; // {data: {atleta_id: "Sim"/"Nao"}}
+function fetchPresencaFromSheets(callback){
+  if(!SHEETS_URL){if(callback)callback();return;}
+  var url=SHEETS_URL+"?acao=get_presenca";
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(res){
+      _atletaPresencas={};
+      if(res.status==="ok"&&res.presenca){
+        res.presenca.forEach(function(p){
+          if(!_atletaPresencas[p.data]) _atletaPresencas[p.data]={};
+          _atletaPresencas[p.data][p.atleta_id]=p.confirmado;
+        });
+      }
+      if(callback)callback();
+    })
+    .catch(function(){if(callback)callback();});
+}
+
+// ═══ CONFIG Google Sheets ═══// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
 // Após publicar o Apps Script, cole a URL aqui:
-var SHEETS_URL = "https://script.google.com/macros/s/AKfycbxuXq0VyABBY9gLa7RX6EgRFTCsyQpYooL3dnkOMM6mVQgSUXnP5kzmL2E9UZ5WCBTkIg/exec"; // ex: "https://script.google.com/macros/s/AKfycbxuXq0VyABBY9gLa7RX6EgRFTCsyQpYooL3dnkOMM6mVQgSUXnP5kzmL2E9UZ5WCBTkIg/exec"
+var SHEETS_URL = "https://script.google.com/macros/s/AKfycbwkBiuL2o8n8fEkvQT__ivPM_2dOOSqER8FsPGWJMqoqSS6A0skBaJbyzUDs3llLN5hVQ/exec"; // ex: "https://script.google.com/macros/s/AKfycbwkBiuL2o8n8fEkvQT__ivPM_2dOOSqER8FsPGWJMqoqSS6A0skBaJbyzUDs3llLN5hVQ/exec"
 var _wbFromSheets = {}; // cache dos dados vindos do Sheets
 
 function fetchWellbeingFromSheets(callback) {
@@ -674,16 +721,19 @@ document.querySelectorAll(".nav-item[data-page]").forEach(function(el){
     el.classList.add("active");
     document.getElementById("page-title").textContent = t(PG_KEYS[pg]||pg);
     destroyCharts();
-    if(SHEETS_URL && (pg==="dashboard"||pg==="wellbeing")){
-      fetchWellbeingFromSheets(function(){
-        document.getElementById("content").innerHTML = render(pg);
-        afterRender(pg);
-        if(pg==="avaliacao") attachSaveBtn();
-      });
-    } else {
+    function finish(){
       document.getElementById("content").innerHTML = render(pg);
       afterRender(pg);
       if(pg==="avaliacao") attachSaveBtn();
+    }
+    if(SHEETS_URL && (pg==="dashboard"||pg==="wellbeing")){
+      fetchWellbeingFromSheets(finish);
+    } else if(SHEETS_URL && pg==="presenca"){
+      fetchPresencaFromSheets(finish);
+    } else if(SHEETS_URL && pg==="carga"){
+      fetchRPEFromSheets(finish);
+    } else {
+      finish();
     }
   });
 });
@@ -1134,8 +1184,12 @@ function rCarga(){
   sess.forEach(function(s,i){
     var u2=cgs[i];var pct=Math.round(u2/tot*100);
     var rpeCls=s.rpe>=8?"badge-red":s.rpe>=6?"badge-yellow":"badge-green";
+    var atlRpeTag="";
+    if(s.data && _atletaRPEs[s.data]){
+      atlRpeTag=' <span style="font-size:10px;color:var(--b7)" title="'+_atletaRPEs[s.data].count+' atletas">&#128100; '+_atletaRPEs[s.data].avg+'</span>';
+    }
     html+='<tr><td><strong>'+diaTxt(s.dia)+'</strong></td><td>'+sessT(s.tipo)+'</td><td>'+s.dur+' min</td>';
-    html+='<td><span class="badge '+rpeCls+'">'+s.rpe+'/10</span></td>';
+    html+='<td><span class="badge '+rpeCls+'">'+s.rpe+'/10</span>'+atlRpeTag+'</td>';
     html+='<td><strong>'+u2+'</strong></td>';
     html+='<td style="width:180px"><div style="display:flex;align-items:center;gap:8px"><span style="min-width:34px;font-size:12px">'+pct+'%</span>';
     html+='<div class="prog-bar" style="flex:1;height:6px"><div class="prog-fill" style="width:'+pct+'%"></div></div></div></td>';
@@ -1161,14 +1215,38 @@ function addSess(){
   var tipo=document.getElementById("nc-tp").value;
   var dt=document.getElementById("nc-dt").value;
   if(!dur||!rpe){alert(t("fill_err"));return;}
-  DB.cargaSemana.push({dia:dayN(dt),tipo:tipo,dur:dur,rpe:rpe});saveDB();
+  DB.cargaSemana.push({dia:dayN(dt),tipo:tipo,dur:dur,rpe:rpe,data:dt});saveDB();
   destroyCharts();document.getElementById("content").innerHTML=rCarga();afterRender("carga");
 }
 
 
 // ═══ Presenca ═════════════════════════════════════════════════════
 function rPresenca(){
-  var html='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>'+t("pres_legend")+'</div>';
+  var html='';
+  // Confirmações de hoje (vindas dos atletas via app)
+  var today=new Date().toISOString().slice(0,10);
+  var todayConfirms=_atletaPresencas[today]||{};
+  var confirmCount=Object.keys(todayConfirms).length;
+  if(confirmCount>0){
+    var simCount=Object.values(todayConfirms).filter(function(v){return v==="Sim";}).length;
+    var naoCount=confirmCount-simCount;
+    html+='<div class="card mb16"><div class="card-title"><i class="ti ti-calendar-check"></i>Confirmações de hoje</div>';
+    html+='<div class="g3" style="margin-bottom:10px">';
+    html+='<div class="metric-card"><div class="metric-label">Confirmados</div><div class="metric-value" style="color:var(--green-700)">'+simCount+'</div></div>';
+    html+='<div class="metric-card"><div class="metric-label">Ausentes</div><div class="metric-value" style="color:var(--red-700)">'+naoCount+'</div></div>';
+    html+='<div class="metric-card"><div class="metric-label">Por confirmar</div><div class="metric-value" style="color:var(--text-3)">'+(DB.atletas.length-confirmCount)+'</div></div>';
+    html+='</div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    DB.atletas.forEach(function(a){
+      var conf=todayConfirms[a.id];
+      var badge=conf==="Sim"?'<span class="badge badge-green">✓ '+a.nome+'</span>':conf==="Nao"?'<span class="badge badge-red">✕ '+a.nome+'</span>':'<span class="badge badge-gray">? '+a.nome+'</span>';
+      html+=badge;
+    });
+    html+='</div></div>';
+  } else {
+    html+='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>Ainda sem confirmações de presença para hoje.</div>';
+  }
+  html+='<div class="alert alert-info mb16"><i class="ti ti-info-circle"></i>'+t("pres_legend")+'</div>';
   html+='<div class="card"><div class="table-wrap"><table>';
   html+='<thead><tr><th style="min-width:160px">'+t("nm_atletas")+'</th>';
   DB.treinoDatas.forEach(function(iso){
