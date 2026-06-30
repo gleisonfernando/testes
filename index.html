@@ -339,12 +339,12 @@ function fetchPresencaFromSheets(callback){
 
 // ═══ CONFIG Google Sheets ═══// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
 // Após publicar o Apps Script, cole a URL aqui:
-var SHEETS_URL = "https://script.google.com/macros/s/AKfycbxCU-63zNSDMEu5rt6WsUEqQL0QMvDe9s8Odzqo33ryYjVvpCvBIN_NaceK124jE8wcRA/exec"; // ex: "https://script.google.com/macros/s/AKfycbxCU-63zNSDMEu5rt6WsUEqQL0QMvDe9s8Odzqo33ryYjVvpCvBIN_NaceK124jE8wcRA/exec"
+var SHEETS_URL = "https://script.google.com/macros/s/AKfycbz2n7B26S-DZcEeAD4Rc6VOn-R8GlEPquXNqnmjj0fXcezUPum0s8J-2RNlJMdDcLpIYw/exec"; // ex: "https://script.google.com/macros/s/AKfycbz2n7B26S-DZcEeAD4Rc6VOn-R8GlEPquXNqnmjj0fXcezUPum0s8J-2RNlJMdDcLpIYw/exec"
 var _wbFromSheets = {}; // cache dos dados vindos do Sheets
 
 function fetchWellbeingFromSheets(callback) {
   if (!SHEETS_URL) { if(callback) callback(); return; }
-  fetch(SHEETS_URL)
+  fetch(SHEETS_URL + "?acao=get_wellbeing")
     .then(function(r){ return r.json(); })
     .then(function(res){
       if(res.status==="ok" && res.wellbeing){
