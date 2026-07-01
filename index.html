@@ -362,7 +362,7 @@ function fetchPresencaFromSheets(callback){
 
 // ═══ CONFIG Google Sheets ═══// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
 // Após publicar o Apps Script, cole a URL aqui:
-var SHEETS_URL = "https://script.google.com/macros/s/AKfycbyhdfBRq5xd39JHJG1wRHYdBP3Gd1t7OENQy1BIss4UCw3XNyg6vc6VDYUthbs4SAunAg/exec"; // ex: "https://script.google.com/macros/s/AKfycbyhdfBRq5xd39JHJG1wRHYdBP3Gd1t7OENQy1BIss4UCw3XNyg6vc6VDYUthbs4SAunAg/exec"
+var SHEETS_URL = "https://script.google.com/macros/s/AKfycbypEsv5Yl8_0AABuPJhvzlZ6IyXmUR81VOfxN0csFXi8cQiPjiSyYM65HFMn7ferbnW5Q/exec"; // ex: "https://script.google.com/macros/s/AKfycbypEsv5Yl8_0AABuPJhvzlZ6IyXmUR81VOfxN0csFXi8cQiPjiSyYM65HFMn7ferbnW5Q/exec"
 var _wbFromSheets = {}; // cache dos dados vindos do Sheets
 
 function fetchWellbeingFromSheets(callback) {
@@ -740,6 +740,7 @@ function atlOpts(sel){
 }
 
 var _currentPage = "dashboard";
+var _editandoAtletaId = null; // null = novo atleta, id = editar existente
 var PG_KEYS = {dashboard:"pg_dashboard",atletas:"pg_atletas",avaliacao:"pg_avaliacao",wellbeing:"pg_wellbeing",carga:"pg_carga",presenca:"pg_presenca",lesoes:"pg_lesoes",relatorio:"pg_relatorio"};
 
 function toggleMobileNav(){
@@ -827,7 +828,7 @@ function rDashboard(){
 // ═══ Atletas ══════════════════════════════════════════════════════
 function rAtletas(){
   var html='<div style="display:flex;justify-content:flex-end;margin-bottom:16px">';
-  html+='<button class="btn primary" onclick="document.getElementById(\'modal-atleta\').classList.remove(\'hidden\')"><i class="ti ti-user-plus"></i>'+t("new_athlete")+'</button></div>';
+  html+='<button class="btn primary" onclick="openNewAtleta()"><i class="ti ti-user-plus"></i>'+t("new_athlete")+'</button></div>';
   html+='<div class="card"><div class="table-wrap"><table>';
   html+='<thead><tr><th>'+t("nm_atletas")+'</th><th>'+t("pos_col")+'</th><th>'+t("age_col")+'</th><th>'+t("weight_col")+'</th><th>'+t("fat_col")+'</th><th>'+t("attendance_col")+'</th><th>'+t("igp_col")+'</th><th>'+t("status_col")+'</th><th>PIN</th><th>'+t("contact_col")+'</th><th></th></tr></thead>';
   html+='<tbody>';
@@ -846,7 +847,7 @@ function rAtletas(){
     html+='<td><span class="badge '+stCls(a.status)+'">'+stTxt(a.status)+'</span></td>';
     html+='<td><span class="badge badge-gray" style="font-family:monospace;letter-spacing:.1em">'+(a.pin||"----")+'</span></td>';
     html+='<td style="font-size:12px;color:var(--text-2)">'+(a.tel||"--")+'</td>';
-    html+='<td><button class="btn danger" style="padding:5px 9px;font-size:12px" onclick="openDel(\''+a.id+'\')" title="'+t("delete_athlete")+'"><i class="ti ti-trash" style="font-size:14px"></i></button></td>';
+    html+='<td style="display:flex;gap:4px"><button class="btn" style="padding:5px 9px;font-size:12px;background:var(--surface);border:1px solid var(--border)" onclick="openEditAtleta(\''+a.id+'\')" title="Editar"><i class="ti ti-pencil" style="font-size:14px"></i></button><button class="btn danger" style="padding:5px 9px;font-size:12px" onclick="openDel(\''+a.id+'\')" title="'+t("delete_athlete")+'"><i class="ti ti-trash" style="font-size:14px"></i></button></td>';
     html+='</tr>';
   });
   html+='</tbody></table></div></div>';
@@ -889,39 +890,98 @@ function saveAtleta(){
   var gord=parseFloat(document.getElementById("m-gord").value)||0;
   var pe=document.getElementById("m-pe").value;
   var tel=document.getElementById("m-tel").value;
+  var isEdit=!!_editandoAtletaId;
+
   if(SHEETS_URL){
-    var params="acao=save_atleta"
+    var acao=isEdit?"update_atleta":"save_atleta";
+    var params="acao="+acao
       +"&nome="+encodeURIComponent(nome)
       +"&pos="+encodeURIComponent(pos)
       +"&nasc="+encodeURIComponent(nasc)
       +"&peso="+peso+"&altura="+altura+"&gord="+gord
       +"&pe="+encodeURIComponent(pe)
       +"&tel="+encodeURIComponent(tel);
+    if(isEdit) params+="&atleta_id="+encodeURIComponent(_editandoAtletaId);
     fetch(SHEETS_URL+"?"+params)
       .then(function(r){return r.json();})
       .then(function(res){
-        var id=res.id||("ATL"+String(DB.nextId++).padStart(3,"0"));
-        var a={id:id,nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,status:"Ativo",pin:pin};
-        DB.atletas.push(a);
-        DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
-        DB.presenca[a.id]=[];
-        if(!DB.avaliacoes[a.id])DB.avaliacoes[a.id]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],gordJP:[],peso:[],massaMagra:[],massaGorda:[],coxaE:[],coxaD:[],pantE:[],pantD:[]};
-        saveDB();closeAtletaModal();destroyCharts();
-        document.getElementById("content").innerHTML=rAtletas();
-        alert((LANG==="de"?"Spieler gespeichert!\nPIN: ":"Atleta salvo! PIN: ")+pin+"\n"+(LANG==="de"?"Jetzt in der App verfugbar.":"Ja disponivel no app."));
+        if(isEdit){
+          // Atualizar localmente sem criar novo
+          var idx=DB.atletas.findIndex(function(x){return x.id===_editandoAtletaId;});
+          if(idx>=0){
+            DB.atletas[idx]=Object.assign(DB.atletas[idx],{nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,pin:pin});
+          }
+          saveDB();closeAtletaModal();destroyCharts();
+          document.getElementById("content").innerHTML=rAtletas();
+          alert(LANG==="de"?"Spieler aktualisiert!":"Atleta atualizado com sucesso!");
+        } else {
+          var id=res.id||("ATL"+String(DB.nextId++).padStart(3,"0"));
+          var a={id:id,nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,status:"Ativo",pin:pin};
+          DB.atletas.push(a);
+          DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
+          DB.presenca[a.id]=[];
+          if(!DB.avaliacoes[a.id])DB.avaliacoes[a.id]={bip:[],s10:[],s30:[],salto:[],prancha:[],gord:[],gordJP:[],peso:[],massaMagra:[],massaGorda:[],coxaE:[],coxaD:[],pantE:[],pantD:[]};
+          saveDB();closeAtletaModal();destroyCharts();
+          document.getElementById("content").innerHTML=rAtletas();
+          alert((LANG==="de"?"Spieler gespeichert!\nPIN: ":"Atleta salvo! PIN: ")+pin+"\n"+(LANG==="de"?"Jetzt in der App verfugbar.":"Ja disponivel no app."));
+        }
       })
       .catch(function(err){alert("Erro: "+err.message);});
   } else {
-    var a={id:"ATL"+String(DB.nextId++).padStart(3,"0"),nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,status:"Ativo",pin:pin};
-    DB.atletas.push(a);
-    DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
-    DB.presenca[a.id]=[];
-    saveDB();closeAtletaModal();destroyCharts();
-    document.getElementById("content").innerHTML=rAtletas();
-    alert("Atleta adicionado! PIN: "+pin);
+    if(isEdit){
+      var idx=DB.atletas.findIndex(function(x){return x.id===_editandoAtletaId;});
+      if(idx>=0) DB.atletas[idx]=Object.assign(DB.atletas[idx],{nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,pin:pin});
+      saveDB();closeAtletaModal();destroyCharts();
+      document.getElementById("content").innerHTML=rAtletas();
+      alert(LANG==="de"?"Spieler aktualisiert!":"Atleta atualizado!");
+    } else {
+      var a={id:"ATL"+String(DB.nextId++).padStart(3,"0"),nome:nome,pos:pos,nasc:nasc,peso:peso,altura:altura,gord:gord,pe:pe,tel:tel,status:"Ativo",pin:pin};
+      DB.atletas.push(a);
+      DB.wellbeing[a.id]={sono:3,fadiga:3,dor:3,motivacao:3,estresse:3};
+      DB.presenca[a.id]=[];
+      saveDB();closeAtletaModal();destroyCharts();
+      document.getElementById("content").innerHTML=rAtletas();
+      alert("Atleta adicionado! PIN: "+pin);
+    }
   }
 }
-function closeAtletaModal(){document.getElementById("modal-atleta").classList.add("hidden");}
+function closeAtletaModal(){
+  document.getElementById("modal-atleta").classList.add("hidden");
+  _editandoAtletaId=null;
+  // Limpar campos
+  ["m-nome","m-nasc","m-peso","m-alt","m-gord","m-tel"].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value="";
+  });
+  var mt=document.getElementById("m-title"); if(mt) mt.textContent=t("new_athlete")||"Novo atleta";
+  var ms=document.getElementById("m-save"); if(ms) ms.textContent=t("save_athlete")||"Salvar atleta";
+}
+
+function openNewAtleta(){
+  _editandoAtletaId=null;
+  closeAtletaModal(); // limpa campos
+  document.getElementById("modal-atleta").classList.remove("hidden");
+}
+
+function openEditAtleta(id){
+  var a=DB.atletas.find(function(x){return x.id===id;});
+  if(!a) return;
+  _editandoAtletaId=id;
+  document.getElementById("m-nome").value=a.nome||"";
+  document.getElementById("m-nasc").value=a.nasc||"";
+  document.getElementById("m-peso").value=a.peso||"";
+  document.getElementById("m-alt").value=a.altura||"";
+  document.getElementById("m-gord").value=a.gord||"";
+  document.getElementById("m-tel").value=a.tel||"";
+  // Posicao
+  var posEl=document.getElementById("m-pos");
+  if(posEl&&a.pos){ for(var i=0;i<posEl.options.length;i++){ if(posEl.options[i].value===a.pos||posEl.options[i].text===a.pos){ posEl.selectedIndex=i; break; } } }
+  // Pe dominante
+  var peEl=document.getElementById("m-pe");
+  if(peEl&&a.pe){ for(var i=0;i<peEl.options.length;i++){ if(peEl.options[i].value===a.pe||peEl.options[i].text===a.pe){ peEl.selectedIndex=i; break; } } }
+  var mt=document.getElementById("m-title"); if(mt) mt.textContent=(LANG==="de"?"Spieler bearbeiten":"Editar atleta")+" — "+a.nome;
+  var ms=document.getElementById("m-save"); if(ms) ms.textContent=(LANG==="de"?"Aktualisieren":"Atualizar");
+  document.getElementById("modal-atleta").classList.remove("hidden");
+}
 
 
 // ═══ Avaliacao ════════════════════════════════════════════════════
