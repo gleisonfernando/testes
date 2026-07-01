@@ -340,6 +340,23 @@ function fetchRPEFromSheets(callback){
     .catch(function(){if(callback)callback();});
 }
 
+// ═══ Todas as avaliações (para relatório geral) ══════════════════
+function fetchTodasAvaliacoes(callback){
+  if(!SHEETS_URL||!DB.atletas.length){if(callback)callback();return;}
+  window._sheetAvaliasCache = window._sheetAvaliasCache||{};
+  var pendentes = DB.atletas.length;
+  var done = function(){ pendentes--; if(pendentes<=0&&callback) callback(); };
+  DB.atletas.forEach(function(a){
+    fetch(SHEETS_URL+"?acao=get_avaliacoes&atleta_id="+encodeURIComponent(a.id))
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res.status==="ok"&&res.avaliacoes) window._sheetAvaliasCache[a.id]=res.avaliacoes;
+        done();
+      })
+      .catch(function(){done();});
+  });
+}
+
 // ═══ Presença confirmada pelos atletas ════════════════════════════
 var _atletaPresencas = {}; // {data: {atleta_id: "Sim"/"Nao"}}
 function fetchPresencaFromSheets(callback){
@@ -432,6 +449,17 @@ pt:{
   new_athlete:"Novo atleta", delete_athlete:"Excluir atleta",
   register_injury:"Registrar lesao", add_week:"Adicionar a semana",
   gen_report:"Gerar relatorio", print_report:"Imprimir", gen_first:"Gere o relatorio primeiro.",
+  tab_individual:"Relatorio Individual", tab_geral:"Relatorio Geral",
+  rel_geral_title:"Avaliacao Fisica — Visao Geral da Equipa",
+  rank_title:"Ranking por Categoria",
+  no_aval_geral:"Nenhum atleta com avaliacao registada ainda.",
+  rank_bip:"Resistencia Aerobia (BIP)",
+  rank_s10:"Velocidade — Sprint 10m",
+  rank_s30:"Velocidade — Sprint 30m",
+  rank_salto:"Potencia — Salto Horizontal",
+  rank_prancha:"Core — Prancha Isometrica",
+  rank_gord:"Composicao Corporal — % Gordura",
+  export_pdf:"Exportar PDF",
   assessment_saved:"Avaliacao salva com sucesso!", select_athlete:"Selecione o atleta.",
   fill_err:"Informe duracao e RPE.",
   load_fill:"Preencha duracao e RPE para calcular a carga da sessao.",
@@ -568,6 +596,17 @@ de:{
   new_athlete:"Neuer Spieler", delete_athlete:"Spieler loschen",
   register_injury:"Verletzung erfassen", add_week:"Zur Woche hinzufugen",
   gen_report:"Bericht erstellen", print_report:"Drucken", gen_first:"Bericht zuerst erstellen.",
+  tab_individual:"Einzelbericht", tab_geral:"Mannschaftsbericht",
+  rel_geral_title:"Korperliche Bewertung — Mannschaftsubersicht",
+  rank_title:"Ranking nach Kategorie",
+  no_aval_geral:"Noch keine Bewertungen vorhanden.",
+  rank_bip:"Ausdauer (BIP)",
+  rank_s10:"Geschwindigkeit — Sprint 10m",
+  rank_s30:"Geschwindigkeit — Sprint 30m",
+  rank_salto:"Sprungkraft — Weitsprung",
+  rank_prancha:"Core — Planke",
+  rank_gord:"Korperzusammensetzung — % Fett",
+  export_pdf:"PDF exportieren",
   assessment_saved:"Bewertung erfolgreich gespeichert!", select_athlete:"Spieler auswahlen.",
   fill_err:"Bitte Dauer und RPE angeben.",
   load_fill:"Dauer und RPE eingeben, um die Einheitenlast zu berechnen.",
@@ -775,6 +814,8 @@ document.querySelectorAll(".nav-item[data-page]").forEach(function(el){
       fetchWellbeingFromSheets(finish);
     } else if(SHEETS_URL && pg==="atletas"){
       fetchAtletasFromSheets(finish);
+    } else if(SHEETS_URL && pg==="relatorio"){
+      fetchTodasAvaliacoes(finish);
     } else if(SHEETS_URL && pg==="presenca"){
       fetchPresencaFromSheets(finish);
     } else if(SHEETS_URL && pg==="carga"){
@@ -1530,7 +1571,11 @@ function rLesoes(){
 // ═══ Relatorio ════════════════════════════════════════════════════
 function rRelatorio(){
   var atlOps=DB.atletas.map(function(a){return '<option value="'+a.id+'">'+a.nome+' ('+a.pos+')</option>';}).join("");
-  var html='<div class="g2">';
+  var html='<div class="tab-bar" style="margin-bottom:16px">';
+  html+='<button class="tab active" id="tab-rel-ind" onclick="swRel(\'ind\')"><i class="ti ti-user"></i> '+t("tab_individual")+'</button>';
+  html+='<button class="tab" id="tab-rel-ger" onclick="swRel(\'ger\')"><i class="ti ti-users"></i> '+t("tab_geral")+'</button>';
+  html+='</div>';
+  html+='<div id="rel-ind-wrap"><div class="g2">';
   html+='<div class="card"><div class="card-title"><i class="ti ti-settings"></i>'+t("cfg_report")+'</div>';
   html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="rel-atl">'+atlOps+'</select></div>';
   html+='<div class="form-group"><label class="form-label">'+t("report_period")+'</label><select id="rel-per">';
@@ -1545,8 +1590,130 @@ function rRelatorio(){
   html+='</div></div>';
   html+='<div id="rel-out" style="flex:1"><div style="padding:40px 20px;text-align:center;color:var(--text-3)">';
   html+='<i class="ti ti-file-analytics" style="font-size:48px;display:block;margin-bottom:8px"></i>'+t("rep_ph")+'</div></div>';
+  html+='</div></div>'; // close g2 + rel-ind-wrap
+  // Team report section
+  html+='<div id="rel-ger-wrap" class="hidden">';
+  html+='<div style="display:flex;justify-content:flex-end;margin-bottom:12px">';
+  html+='<button class="btn" onclick="printRelGeral()"><i class="ti ti-printer"></i> '+t("print_report")+'</button>';
+  html+='</div>';
+  html+='<div id="rel-ger-out">'+buildRelGeral()+'</div>';
   html+='</div>';
   return html;
+}
+
+function swRel(tab){
+  document.getElementById("rel-ind-wrap").classList.toggle("hidden", tab!=="ind");
+  document.getElementById("rel-ger-wrap").classList.toggle("hidden", tab!=="ger");
+  document.getElementById("tab-rel-ind").classList.toggle("active", tab==="ind");
+  document.getElementById("tab-rel-ger").classList.toggle("active", tab==="ger");
+}
+
+function buildRelGeral(){
+  // Gather all athletes with assessments from Sheets (_sheetAvaliacoes)
+  var atletas = DB.atletas;
+  if(!atletas||!atletas.length) return '<div class="alert alert-info"><i class="ti ti-info-circle"></i>'+t("no_aval_geral")+'</div>';
+
+  // Use _sheetAvaliasCache if available, else use DB.avaliacoes
+  var getLastAv = function(id){
+    if(window._sheetAvaliasCache&&window._sheetAvaliasCache[id]&&window._sheetAvaliasCache[id].length){
+      return window._sheetAvaliasCache[id][window._sheetAvaliasCache[id].length-1];
+    }
+    var av=DB.avaliacoes[id];
+    if(!av) return null;
+    if(av.bip&&av.bip.length) return {bip:av.bip[av.bip.length-1],s10:av.s10[av.s10.length-1],s30:av.s30[av.s30.length-1],salto:av.salto[av.salto.length-1],prancha:av.prancha[av.prancha.length-1],gord:av.gord[av.gord.length-1],gordJP:av.gordJP?av.gordJP[av.gordJP.length-1]:0,magra:av.massaMagra?av.massaMagra[av.massaMagra.length-1]:0,gorda:av.massaGorda?av.massaGorda[av.massaGorda.length-1]:0,peso:av.peso[av.peso.length-1]};
+    return null;
+  };
+
+  var data = atletas.map(function(a){
+    return {atleta:a, av:getLastAv(a.id)};
+  }).filter(function(d){return d.av;});
+
+  if(!data.length) return '<div class="alert alert-info"><i class="ti ti-info-circle"></i>'+t("no_aval_geral")+'</div>';
+
+  var genDate = new Date().toLocaleDateString(LANG==="de"?"de-DE":"pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  var html='<div id="rel-geral-print">';
+  html+='<div class="report-header" style="margin-bottom:16px"><h2>'+t("rel_geral_title")+'</h2>';
+  html+='<p>SK Brederis 1B &middot; '+genDate+' &middot; '+data.length+' atletas avaliados</p></div>';
+
+  // ── Tabela comparativa ────────────────────────────────────────
+  html+='<div class="card" style="margin-bottom:16px"><div class="card-title"><i class="ti ti-table"></i>Tabela Comparativa</div>';
+  html+='<div class="table-wrap"><table>';
+  html+='<thead><tr>';
+  html+='<th>Atleta</th><th>Pos</th><th>Peso (kg)</th><th>Gord %</th><th>Massa M (kg)</th>';
+  html+='<th>Prancha (s)</th><th>Sprint 10m</th><th>Sprint 30m</th><th>Salto (cm)</th><th>BIP (m)</th>';
+  html+='</tr></thead><tbody>';
+
+  function cls(val, t1, t2, rev){
+    if(!val||val===0) return "";
+    var ok=rev?(val<=t1):(val>=t1), med=rev?(val<=t2):(val>=t2);
+    return ok?"badge-green":med?"badge-yellow":"badge-red";
+  }
+
+  data.forEach(function(d){
+    var a=d.atleta, av=d.av;
+    html+='<tr>';
+    html+='<td><b>'+a.nome+'</b></td>';
+    html+='<td><span class="badge badge-blue">'+a.pos+'</span></td>';
+    html+='<td>'+(av.peso||"--")+'</td>';
+    html+='<td><span class="badge '+(av.gord<10?"badge-green":av.gord<=14?"badge-yellow":"badge-red")+'">'+(av.gord||"--")+'%</span></td>';
+    html+='<td>'+(av.magra||"--")+'</td>';
+    html+='<td><span class="badge '+cls(av.prancha,120,90,false)+'">'+(av.prancha||"--")+'</span></td>';
+    html+='<td><span class="badge '+cls(av.s10,1.80,1.99,true)+'">'+(av.s10||"--")+'</span></td>';
+    html+='<td><span class="badge '+cls(av.s30,4.00,4.30,true)+'">'+(av.s30||"--")+'</span></td>';
+    html+='<td><span class="badge '+cls(av.salto,220,200,false)+'">'+(av.salto||"--")+'</span></td>';
+    html+='<td><span class="badge '+cls(av.bip,1800,1400,false)+'">'+(av.bip||"--")+'</span></td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  html+='<div style="margin-top:6px;font-size:11px;color:var(--text-3)"><span class="badge badge-green">■</span> Excelente &nbsp;<span class="badge badge-yellow">■</span> Bom &nbsp;<span class="badge badge-red">■</span> A melhorar</div>';
+  html+='</div>';
+
+  // ── Rankings ──────────────────────────────────────────────────
+  html+='<div class="card"><div class="card-title"><i class="ti ti-trophy"></i>'+t("rank_title")+'</div>';
+  html+='<div class="g2">';
+
+  function ranking(title, key, unit, reverse, ico){
+    var sorted = data.filter(function(d){return d.av[key]&&d.av[key]>0;})
+      .sort(function(a,b){ return reverse?(a.av[key]-b.av[key]):(b.av[key]-a.av[key]); });
+    if(!sorted.length) return "";
+    var r='<div><div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">'+ico+' '+title+'</div>';
+    sorted.slice(0,5).forEach(function(d,i){
+      var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":"   ";
+      var pct = Math.round(d.av[key]/(sorted[0].av[key])*100);
+      r+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">';
+      r+='<span style="font-size:16px;width:24px">'+medal+'</span>';
+      r+='<span style="flex:1;font-size:13px">'+d.atleta.nome+'</span>';
+      r+='<span style="font-size:13px;font-weight:700">'+d.av[key]+' '+unit+'</span>';
+      r+='<div style="width:60px"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div></div>';
+      r+='</div>';
+    });
+    r+='</div>';
+    return r;
+  }
+
+  html+=ranking(t("rank_bip"),       "bip",    "m",   false, "🏃");
+  html+=ranking(t("rank_s10"),       "s10",    "s",   true,  "⚡");
+  html+=ranking(t("rank_s30"),       "s30",    "s",   true,  "💨");
+  html+=ranking(t("rank_salto"),     "salto",  "cm",  false, "🦘");
+  html+=ranking(t("rank_prancha"),   "prancha","s",   false, "🧱");
+  html+=ranking(t("rank_gord"),      "gord",   "%",   true,  "⚖️");
+
+  html+='</div></div>';
+  html+='</div>'; // end rel-geral-print
+  return html;
+}
+
+function printRelGeral(){
+  var content=document.getElementById("rel-geral-print");
+  if(!content){alert(t("no_aval_geral"));return;}
+  var win=window.open("","_blank");
+  win.document.write("<html><head><title>Relatorio Geral SKBrederis 1B</title>");
+  win.document.write("<style>body{font-family:sans-serif;padding:20px;font-size:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#0d3318;color:#fff}.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}.badge-green{background:#e8f5e9;color:#1b5e20}.badge-yellow{background:#fffde7;color:#f57f17}.badge-red{background:#ffebee;color:#c62828}.badge-blue{background:#e3f2fd;color:#1565c0}.prog-bar{height:4px;background:#e2e5ea;border-radius:2px}.prog-fill{height:100%;background:#2e7d32;border-radius:2px}h2{color:#0d3318}@media print{button{display:none}}</style>");
+  win.document.write("</head><body>");
+  win.document.write(content.innerHTML);
+  win.document.write("</body></html>");
+  win.document.close();
+  setTimeout(function(){win.print();},400);
 }
 function genRel(){
   var id=document.getElementById("rel-atl").value;
