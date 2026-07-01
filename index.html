@@ -362,7 +362,7 @@ function fetchPresencaFromSheets(callback){
 
 // ═══ CONFIG Google Sheets ═══// ═══ CONFIG Google Sheets ═══════════════════════════════════════════
 // Após publicar o Apps Script, cole a URL aqui:
-var SHEETS_URL = "https://script.google.com/macros/s/AKfycbypEsv5Yl8_0AABuPJhvzlZ6IyXmUR81VOfxN0csFXi8cQiPjiSyYM65HFMn7ferbnW5Q/exec"; // ex: "https://script.google.com/macros/s/AKfycbypEsv5Yl8_0AABuPJhvzlZ6IyXmUR81VOfxN0csFXi8cQiPjiSyYM65HFMn7ferbnW5Q/exec"
+var SHEETS_URL = "https://script.google.com/macros/s/AKfycbwMkEgie9fSJHzFutOLHT4ZzRitT1XX2iOI0-63ZeHx6pOzZiQpSz06nvrshnhv-jQu_A/exec"; // ex: "https://script.google.com/macros/s/AKfycbwMkEgie9fSJHzFutOLHT4ZzRitT1XX2iOI0-63ZeHx6pOzZiQpSz06nvrshnhv-jQu_A/exec"
 var _wbFromSheets = {}; // cache dos dados vindos do Sheets
 
 function fetchWellbeingFromSheets(callback) {
@@ -945,6 +945,48 @@ function saveAtleta(){
     }
   }
 }
+function preencherUltimaAv(atletaId){
+  // Busca a última avaliação do atleta no Sheets e pré-preenche os campos
+  if(!atletaId||!SHEETS_URL) return;
+  fetch(SHEETS_URL+"?acao=get_avaliacoes&atleta_id="+encodeURIComponent(atletaId))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.status!=="ok"||!res.avaliacoes||!res.avaliacoes.length) return;
+      var av=res.avaliacoes[res.avaliacoes.length-1]; // última avaliação
+      // Período
+      var perEl=document.getElementById("av-per");
+      if(perEl&&av.periodo){for(var i=0;i<perEl.options.length;i++){if(perEl.options[i].value===av.periodo){perEl.selectedIndex=i;break;}}}
+      // Peso e altura
+      if(av.peso) setElVal("av-peso",av.peso);
+      if(av.alt)  setElVal("av-alt",av.alt);
+      // Perimetros composição
+      if(av.pescoco) setElVal("av-pescoco",av.pescoco);
+      if(av.cin)     setElVal("av-cin",av.cin);
+      if(av.quad)    setElVal("av-quad",av.quad);
+      // Assimetria
+      if(av.coxaE) setElVal("av-coxa-e",av.coxaE);
+      if(av.coxaD) setElVal("av-coxa-d",av.coxaD);
+      if(av.pantE) setElVal("av-pant-e",av.pantE);
+      if(av.pantD) setElVal("av-pant-d",av.pantD);
+      // Testes físicos
+      if(av.prancha) setElVal("av-pr",av.prancha);
+      if(av.s10)     setElVal("av-s10",av.s10);
+      if(av.s30)     setElVal("av-s30",av.s30);
+      if(av.salto)   setElVal("av-sal",av.salto);
+      if(av.bip)     setElVal("av-bip",av.bip);
+      // Recalcular
+      calcComposicao();calcAssimetria();
+      // Mostrar banner informativo
+      var banner=document.getElementById("av-prefill-banner");
+      if(banner){
+        banner.style.display="flex";
+        banner.innerHTML='<i class="ti ti-refresh"></i>&nbsp;Campos pré-preenchidos com a última avaliação ('+av.periodo+'). Altere apenas o que mudou e clique Salvar.';
+      }
+    })
+    .catch(function(){});
+}
+function setElVal(id,val){var el=document.getElementById(id);if(el&&val!==undefined&&val!==null&&val!==0)el.value=val;}
+
 function closeAtletaModal(){
   document.getElementById("modal-atleta").classList.add("hidden");
   _editandoAtletaId=null;
@@ -1000,12 +1042,13 @@ function rAvaliacao(){
   // FORM TAB
   html+='<div id="av-form">';
   html+='<div class="alert alert-warn mb16"><i class="ti ti-alert-triangle"></i>'+t("assessment_seq")+'</div>';
+  html+='<div id="av-prefill-banner" class="alert alert-info mb16" style="display:none"></div>';
   html+='<div class="g2">';
 
   // Card 1 - Identificação
   html+='<div class="card">';
   html+='<div class="card-title"><i class="ti ti-user"></i>'+t("identification")+'</div>';
-  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="av-atl" onchange="calcComposicao()">'+atlOps+'</select></div>';
+  html+='<div class="form-group"><label class="form-label">'+t("ll_atleta")+'</label><select id="av-atl" onchange="preencherUltimaAv(this.value);calcComposicao()">'+atlOps+'</select></div>';
   html+='<div class="form-group"><label class="form-label">'+t("assessment_period")+'</label><select id="av-per">';
   html+='<option value="Sem. 0">'+t("sem0")+'</option>';
   html+='<option value="Sem. 4">'+t("sem4")+'</option>';
@@ -1157,6 +1200,10 @@ function saveAv(){
       +"&atleta_nome="+encodeURIComponent(atl?atl.nome:"")
       +"&periodo="+encodeURIComponent(periodo)
       +"&peso="+encodeURIComponent(getEl("av-peso")||0)
+      +"&alt="+encodeURIComponent(getEl("av-alt")||0)
+      +"&pescoco="+encodeURIComponent(getEl("av-pescoco")||0)
+      +"&cin="+encodeURIComponent(getEl("av-cin")||0)
+      +"&quad="+encodeURIComponent(getEl("av-quad")||0)
       +"&gord="+(comp.gordNavy||0)
       +"&gordJP="+(comp.gordJP||0)
       +"&magra="+(comp.massaMagra||0)
