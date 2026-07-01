@@ -1539,23 +1539,68 @@ function rPresenca(){
 }
 
 // ═══ Lesoes ═══════════════════════════════════════════════════════
-function closeLesaoModal(){document.getElementById("modal-lesao").classList.add("hidden");}
+function closeLesaoModal(){
+  document.getElementById("modal-lesao").classList.add("hidden");
+  _editandoLesaoIdx = null;
+  document.getElementById("l-title").textContent = t("register_injury")||"Registrar lesao";
+  document.getElementById("l-retorno").value="";
+  document.getElementById("l-obs").value="";
+}
+
+var _editandoLesaoIdx = null;
+
 function openLesaoModal(){
+  _editandoLesaoIdx = null;
   var sel=document.getElementById("l-atleta");sel.innerHTML="";
   atlOpts(sel);document.getElementById("l-inicio").value=todayStr();
+  document.getElementById("l-retorno").value="";
+  document.getElementById("l-obs").value="";
+  document.getElementById("l-title").textContent = t("register_injury")||"Registrar lesao";
   document.getElementById("modal-lesao").classList.remove("hidden");
 }
+
+function openEditLesao(idx){
+  var l=DB.lesoes[idx]; if(!l) return;
+  _editandoLesaoIdx = idx;
+  var sel=document.getElementById("l-atleta"); sel.innerHTML=""; atlOpts(sel);
+  // Select athlete
+  for(var i=0;i<sel.options.length;i++){ if(DB.atletas.find(function(a){return a.nome===l.atleta&&a.id===sel.options[i].value;})) { sel.selectedIndex=i; break; } }
+  document.getElementById("l-inicio").value   = l.inicio||"";
+  document.getElementById("l-retorno").value  = l.retorno||"";
+  document.getElementById("l-obs").value      = l.obs||"";
+  // Regiao — extract before " ("
+  var regBase = l.regiao?l.regiao.split(" (")[0]:"";
+  var ladoBase= l.regiao&&l.regiao.indexOf("(")>=0?l.regiao.split("(")[1].replace(")",""):"";
+  setSelectVal("l-regiao", regBase);
+  setSelectVal("l-lado",   ladoBase);
+  setSelectVal("l-tipo",   l.tipo);
+  setSelectVal("l-mec",    l.mec);
+  document.getElementById("l-title").textContent = (LANG==="de"?"Verletzung bearbeiten":"Editar lesão");
+  document.getElementById("modal-lesao").classList.remove("hidden");
+}
+
+function setSelectVal(id, val){
+  var el=document.getElementById(id); if(!el||!val) return;
+  for(var i=0;i<el.options.length;i++){ if(el.options[i].value===val||el.options[i].text===val||el.options[i].text.startsWith(val)){ el.selectedIndex=i; break; } }
+}
+
 function saveLesao(){
   var aid=document.getElementById("l-atleta").value;
   var a=DB.atletas.find(function(x){return x.id===aid;});if(!a)return;
   var ret=document.getElementById("l-retorno").value;
-  DB.lesoes.push({atleta:a.nome,inicio:document.getElementById("l-inicio").value,
+  var novaLesao={atleta:a.nome,inicio:document.getElementById("l-inicio").value,
     retorno:ret||"",regiao:document.getElementById("l-regiao").value+" ("+document.getElementById("l-lado").value+")",
     tipo:document.getElementById("l-tipo").value,mec:document.getElementById("l-mec").value,
-    obs:document.getElementById("l-obs").value,status:ret?"Recuperado":"Em tratamento"});
-  if(!ret){var at=DB.atletas.find(function(x){return x.id===aid;});if(at)at.status="Lesionado";}
+    obs:document.getElementById("l-obs").value,status:ret?"Recuperado":"Em tratamento"};
+  if(_editandoLesaoIdx!==null){
+    DB.lesoes[_editandoLesaoIdx]=novaLesao;
+  } else {
+    DB.lesoes.push(novaLesao);
+    if(!ret){var at=DB.atletas.find(function(x){return x.id===aid;});if(at)at.status="Lesionado";}
+  }
   saveDB();closeLesaoModal();destroyCharts();document.getElementById("content").innerHTML=rLesoes();
 }
+
 function rLesoes(){
   var ativas=DB.lesoes.filter(function(l){return l.status==="Em tratamento";}).length;
   var recov=DB.lesoes.filter(function(l){return l.status==="Recuperado";}).length;
@@ -1566,8 +1611,8 @@ function rLesoes(){
   html+='<div class="metric-card"><div class="metric-label">'+t("total_inj")+'</div><div class="metric-value">'+DB.lesoes.length+'</div><div class="metric-sub">'+t("recovered_n").replace("{n}",recov)+'</div></div>';
   html+='</div>';
   html+='<div class="card"><div class="table-wrap"><table>';
-  html+='<thead><tr><th>'+t("ll_atleta")+'</th><th>'+t("start_col")+'</th><th>'+t("return_col")+'</th><th>'+t("days_col")+'</th><th>'+t("region_col")+'</th><th>'+t("ll_tipo")+'</th><th>'+t("mech_col")+'</th><th>'+t("status_col")+'</th></tr></thead><tbody>';
-  DB.lesoes.forEach(function(l){
+  html+='<thead><tr><th>'+t("ll_atleta")+'</th><th>'+t("start_col")+'</th><th>'+t("return_col")+'</th><th>'+t("days_col")+'</th><th>'+t("region_col")+'</th><th>'+t("ll_tipo")+'</th><th>'+t("mech_col")+'</th><th>'+t("status_col")+'</th><th></th></tr></thead><tbody>';
+  DB.lesoes.forEach(function(l,idx){
     var dias="--";
     if(l.inicio&&l.retorno&&l.retorno!==""){try{dias=Math.round((new Date(l.retorno)-new Date(l.inicio))/86400000)+" "+t("days_lbl");}catch(e){}}
     else if(l.inicio&&l.status==="Em tratamento"){try{dias=Math.round((new Date()-new Date(l.inicio))/86400000)+" "+t("days_lbl")+"+";}catch(e){}}
@@ -1576,7 +1621,9 @@ function rLesoes(){
     html+='<td>'+fmtD(l.inicio)+'</td><td>'+(l.retorno?fmtD(l.retorno):"--")+'</td>';
     html+='<td>'+dias+'</td><td>'+l.regiao+'</td>';
     html+='<td><span class="badge badge-gray">'+l.tipo+'</span></td><td>'+l.mec+'</td>';
-    html+='<td><span class="badge '+(l.status==="Recuperado"?"badge-green":"badge-red")+'">'+st+'</span></td></tr>';
+    html+='<td><span class="badge '+(l.status==="Recuperado"?"badge-green":"badge-red")+'">'+st+'</span></td>';
+    html+='<td><button class="btn" style="padding:5px 9px;font-size:12px;background:var(--surface);border:1px solid var(--border)" onclick="openEditLesao('+idx+')" title="Editar"><i class="ti ti-pencil" style="font-size:14px"></i></button></td>';
+    html+='</tr>';
   });
   html+='</tbody></table></div></div>';
   return html;
